@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>北邮课程表</title>
+    <meta name="description" content="北邮课程表 · 离线可用，节假日自动静默，支持导出系统日历提醒" />
+    <meta name="theme-color" content="#013A89" />
+    <!-- 版本号唯一来源：设置 › 关于 从这里读。发版时只改这一处（构建脚本另有 VERSION_* 常量，两处要一起动） -->
+    <meta name="app-version" content="1.11.3" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="北邮课表" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
+    <link rel="stylesheet" href="./assets/css/app.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="file-warning" class="global-warning" hidden></div>
+      <main id="view" class="view"></main>
+
+      <div id="onboard-host"></div>
+      <div id="guide-host"></div>
+
+      <nav class="tabbar" id="tabbar" aria-label="主导航">
+        <a class="tab is-active" href="#/timetable" data-route="#/timetable" data-action="nav" aria-label="课表">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="4.5" width="18" height="16" rx="3" />
+            <path d="M3 9.5h18M8 3v3M16 3v3M9 14h2M13 14h2" />
+          </svg>
+          <span>课表</span>
+        </a>
+        <a class="tab" href="#/import" data-route="#/import" data-action="nav" aria-label="导入">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v11m0 0 4-4m-4 4-4-4" />
+            <path d="M4 16.5V18a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1.5" />
+          </svg>
+          <span>导入</span>
+        </a>
+        <a class="tab" href="#/reminder" data-route="#/reminder" data-action="nav" aria-label="提醒">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+            <path d="M9.5 18a2.5 2.5 0 0 0 5 0" />
+          </svg>
+          <span>提醒</span>
+        </a>
+        <a class="tab" href="#/settings" data-route="#/settings" data-action="nav" aria-label="设置">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3.2" />
+            <path d="M12 3.5v2M12 18.5v2M4.6 7.8l1.7 1M17.7 15.2l1.7 1M4.6 16.2l1.7-1M17.7 8.8l1.7-1" />
+          </svg>
+          <span>设置</span>
+        </a>
+      </nav>
+
+      <div id="snackbar-host" class="snackbar-host" aria-live="polite"></div>
+      <div id="sheet-host" class="sheet-host"></div>
+      <div id="picker-host" class="picker-host"></div>
+      <div id="dialog-host" class="dialog-host"></div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

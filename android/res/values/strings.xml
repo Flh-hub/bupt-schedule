@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">北邮课程表</string>
+
+    <!-- 桌面小组件 -->
+    <string name="widget_label">北邮课程表</string>
+    <string name="widget_desc">今天的课，不用打开应用就能看</string>
+    <string name="widget_empty_title">还没有课表</string>
+    <!-- 首帧/预览用的占位文案：桌面在 onUpdate 之前只会画 initialLayout -->
+    <string name="widget_placeholder">北邮课程表</string>
+    <string name="widget_empty_hint">打开应用导入课表后\n这里就会显示当天的课</string>
+    <string name="widget_stale_title">课表该更新了</string>
+    <string name="widget_stale_hint">小组件的数据已超过两周\n打开应用同步一下</string>
+    <string name="widget_no_course">今天没课</string>
+    <string name="widget_pending">这天要不要上课还没确认\n打开应用定一下</string>
+    <string name="widget_holiday">%1$s · 放假</string>
+    <string name="widget_count">%1$d 门课</string>
+    <string name="widget_rest">休息</string>
+    <!-- 今天的课全上完了（不是"今天没课"）：和 App 首页今日卡片同一句话 -->
+    <string name="widget_daily_done">bupter 你的每日委托已完成\n请自由探索世界 😊</string>
+</resources>

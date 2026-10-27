@@ -1,0 +1,15 @@
+# 一律用 LF 入库。
+# 本机 git 的 core.autocrlf 是系统级 true（git config --system），优先级高于仓库配置，
+# 不在这里声明的话 .sh / .js 会带 CRLF 入库，克隆到 macOS/Linux 直接跑不起来。
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.apk binary
+*.idsig binary
+*.woff binary
+*.woff2 binary

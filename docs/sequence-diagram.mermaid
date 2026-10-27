@@ -1,0 +1,100 @@
+%% 北邮课程表 · 关键流程时序图（摘自 ARCHITECTURE.md §4.2 / §4.3 / §4.4）
+
+%% ---------- 流程一：启动 → 渲染课表 → 生成提醒 ----------
+sequenceDiagram
+  autonumber
+  participant U as 用户
+  participant M as main.js
+  participant S as Store
+  participant C as CalendarEngine
+  participant R as ReminderScheduler
+  participant SW as sw.js
+  participant OS as ColorOS
+
+  U->>M: 打开（index.html 已由 SW 缓存命中）
+  M->>SW: navigator.serviceWorker.register('./sw.js')
+  M->>S: init() → 读 localStorage['bupt_schedule_v1']
+  S->>S: migrate(raw) / 写入失败检测（隐私模式）
+  S-->>M: state
+  M->>M: 解析 location.hash → route='#/timetable'（默认）
+  M->>S: getState() → settings.semesterStartMonday
+  alt semesterStartMonday 为 null
+    M->>U: 顶部提示"未设置学期起始日，周次可能不准" + 一键跳设置
+  end
+  M->>C: resolveDay(state, todayStr())
+  C->>C: classifyDay → resolveClasses（学期边界 → 假期 → 补班三态 → 周次 → Adjustment → 冲突 → 时间）
+  C-->>M: Day{ weekNo, status, complete, notice, classes[] }
+  alt status === 'makeup_unconfirmed'（补班日未确认，null 无条件优先）
+    M->>U: 确认占位卡"9月20日（周日）是国庆调休上班日，请确认按周几的课表上课"（8 选 1，主区域不可折叠）
+    U->>M: 选"周四" → dispatch(SET_MAKEUP_FOLLOW) → 重算 + replan
+    Note over M,C: 确认前该日不生成提醒、不进 .ics，plan.warnings 出告警
+  end
+  M->>C: resolveRange(state, 本周一, 本周日)
+  C-->>M: Day[]（周视图网格数据 + 每日 status）
+  M->>U: 渲染周视图 + 今日概览 + 下一节课倒计时（+ 本周待确认汇总条）
+  M->>R: startScheduler({getState, notify})
+  R->>C: getReminders(state, now, now+6h)
+  C-->>R: ReminderPlan{ points, pendingDates, skipped, warnings }
+  R->>R: diffPlan(plan.points, firedSet) → setTimeout 逐条（定时器在页面内）
+  Note over R: 页面切走/回来时 visibilitychange → replan + catchUp；<br/>每分钟 TICK 做窗口滑移与跨零点探测
+  R->>SW: registration.showNotification(title, {body, tag:key, data:{url}})
+  SW->>OS: 系统通知
+  OS-->>U: "即将上课 · 08:00 高等数学(上) · 教三-201"
+
+%% ---------- 流程二：导入（三通道归一到 ParseResult） ----------
+sequenceDiagram
+  autonumber
+  participant U as 用户
+  participant V as ui/import.js
+  participant P as ParserRegistry
+  participant S as Store
+  participant C as CalendarEngine
+
+  U->>V: 选择通道（文本 / HTML / JSON）并提交内容
+  alt 通道=文本
+    V->>P: parseText(raw)
+  else 通道=HTML
+    V->>P: detectSource(html)
+    P-->>V: 'jwgl' | 'wecom' | 'unknown'
+    alt 判别失败
+      V->>U: 展示来源下拉，要求手动指定
+      U->>V: 选定来源
+    end
+    V->>P: parseHtml(html, {source})
+  else 通道=JSON
+    V->>P: parseJson(raw)
+    P->>P: schemaVersion 校验 / 兼容映射
+  end
+  P-->>V: ParseResult{courses,sessions,warnings,unrecognized,meta}
+  V->>U: 预览表（可逐行编辑）+ 未识别行清单（高亮原文 + 缺失字段）
+  U->>V: 修正后点"确认导入"
+  V->>S: dispatch({type:'IMPORT_COMMIT', payload:parseResult})
+  S->>S: 校验 endPeriod>=startPeriod、周次越界裁剪、生成 uid、写 importHistory 快照
+  S-->>V: 新 state
+  V->>C: resolveDay(state, today)
+  V->>U: 提示"是否导出日历提醒" → 跳 reminder Tab
+
+%% ---------- 流程三：单次调课 → 重算 ----------
+sequenceDiagram
+  autonumber
+  participant U as 用户
+  participant T as ui/timetable.js(详情页)
+  participant S as Store
+  participant C as CalendarEngine
+  participant R as ReminderScheduler
+
+  U->>T: 点击周四第3-4节课程块
+  T->>C: resolveDay(state, '2026-03-05')
+  C-->>T: Day{ status:'ok', classes[]（含 classKey / sessionId / 冲突标记） }
+  T->>U: 展示信息卡 + 四个操作按钮
+  U->>T: 选择"改教室" → 输入"教四-105"
+  T->>S: dispatch({type:'ADD_ADJUSTMENT', payload:{date,type:'roomChange',targetSessionId,location}})
+  S->>S: 生成 uid、append 到 adjustments、persist()（sessions 不动）
+  S-->>T: 新 state（订阅回调）
+  T->>C: resolveDay(state, '2026-03-05')
+  C-->>T: location=教四-105, origin='adjustment', original.location='教三-201'
+  T->>U: 课程块标"已调整"，详情显示"教三-201 → 教四-105"；Snackbar 5s 内可撤销
+  T->>R: replan()
+  R->>C: getReminders(state, now, now+6h)
+  C-->>R: 新的 ReminderPlan（文案/时间已按新教室重算）
+  R->>U: 若已导出过 .ics → 提示"日历需重新导出以同步"

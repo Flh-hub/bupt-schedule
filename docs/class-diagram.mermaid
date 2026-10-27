@@ -1,0 +1,188 @@
+%% 北邮课程表 · 类图（摘自 ARCHITECTURE.md §4.1）
+classDiagram
+  direction LR
+
+  class Settings {
+    +int schemaVersion
+    +string semesterStartMonday
+    +int totalWeeks
+    +Period[] periods
+    +ReminderSettings reminder
+    +bool skipOnHoliday
+    +string makeupWorkdayMode
+    +string timezone
+    +string icsExportRange
+    +int icsSequence
+  }
+  class Period {
+    +int index
+    +string label
+    +string start
+    +string end
+    +bool isCustom
+  }
+  class Course {
+    +string id
+    +string name
+    +string teacher
+    +string color
+    +string note
+  }
+  class CourseSession {
+    +string id
+    +string courseId
+    +int dayOfWeek
+    +int startPeriod
+    +int endPeriod
+    +string location
+    +WeekSpec weeks
+    +string rawWeeksText
+    +string sourceRef
+  }
+  class WeekSpec {
+    +int start
+    +int end
+    +string type
+    +int[] extra
+  }
+  class Adjustment {
+    +string id
+    +string date
+    +string type
+    +string targetSessionId
+    +string courseId
+    +int startPeriod
+    +int endPeriod
+    +string startTime
+    +string endTime
+    +string location
+  }
+  class Holiday {
+    +string date
+    +string name
+    +string type
+    +string followDayOfWeek
+    +string source
+    +bool inferred
+    +bool tentative
+    +string updatedAt
+  }
+  %% followDayOfWeek: 1..7 | 'none' | null（仅 01-04→5 为推定，其余 null）
+  class ReminderRule {
+    +string id
+    +string scope
+    +string targetId
+    +int advanceMinutes
+    +string channel
+    +bool enabled
+  }
+  class ResolvedClass {
+    +string key
+    +string date
+    +int weekNo
+    +string courseId
+    +int startPeriod
+    +int endPeriod
+    +string startTime
+    +string endTime
+    +string location
+    +string origin
+    +string adjustmentType
+    +bool conflict
+  }
+  class Day {
+    +string date
+    +int weekNo
+    +string status
+    +bool complete
+    +string notice
+    +string holidayName
+    +int followDayOfWeek
+    +int effectiveDayOfWeek
+    +ResolvedClass[] classes
+  }
+  class ReminderPoint {
+    +string key
+    +string date
+    +string courseId
+    +int advanceMinutes
+    +int triggerAt
+    +string title
+    +string body
+  }
+  class ReminderPlan {
+    +ReminderPoint[] points
+    +string[] pendingDates
+    +Skipped[] skipped
+    +string[] warnings
+  }
+  class ParseResult {
+    +Course[] courses
+    +CourseSession[] sessions
+    +string[] warnings
+    +Unrecognized[] unrecognized
+    +Meta meta
+  }
+  class Store {
+    +getState()
+    +subscribe(fn)
+    +dispatch(action)
+    -persist()
+    -migrate(raw)
+  }
+  class CalendarEngine {
+    +weekNoOf(date, startMonday) int
+    +classifyDay(state, date) DayClassification
+    +resolveClasses(state, date) ResolvedClass[]
+    +resolveDay(state, date) Day
+    +resolveRange(state, from, to) Day[]
+    +getReminders(state, from, to) ReminderPlan
+    +detectConflicts(classes) void
+  }
+  class HolidayBook {
+    +builtin2026() Holiday[]
+    +buildIndex(userHolidays) Map
+    +getHoliday(date, index) Holiday
+    +listMakeupDays() Holiday[]
+    +effectiveDayOfWeek(holiday, realDow, mode) DayFollowResult
+  }
+  class IcsWriter {
+    +buildIcs(plan, opts) IcsResult
+    +vevent(cls, seq) string
+    +valarm(minutes) string
+    +foldLine(line) string
+  }
+  class ReminderScheduler {
+    +replan()
+    +catchUp()
+    +fire(p)
+    +requestPermission() string
+  }
+  class ParserRegistry {
+    +detectSource(html) string
+    +parse(input, opts) ParseResult
+    +parseText(text) ParseResult
+    +parseHtml(html) ParseResult
+    +parseJson(raw) ParseResult
+  }
+
+  Settings "1" *-- "1..20" Period
+  Settings "1" *-- "1" ReminderRule : reminder.rules
+  Course "1" o-- "0..*" CourseSession : courseId
+  CourseSession "1" *-- "1" WeekSpec : weeks
+  CourseSession "1" o-- "0..*" Adjustment : targetSessionId
+  Holiday ..> CalendarEngine : 查询
+  CalendarEngine --> HolidayBook
+  CalendarEngine --> Settings
+  CalendarEngine ..> ResolvedClass : resolveClasses 产出
+  CalendarEngine ..> Day : resolveDay 产出
+  CalendarEngine ..> ReminderPlan : getReminders 产出
+  IcsWriter ..> ReminderPlan : 消费
+  ReminderScheduler ..> ReminderPlan : 消费
+  Store --> Settings
+  Store --> Course
+  Store --> CourseSession
+  Store --> Adjustment
+  Store --> Holiday
+  ParserRegistry ..> ParseResult : 产出
+  ParseResult ..> Store : 导入写入

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  小组件能力声明。默认 3×2（3 列 × 2 行）。
+
+  minWidth/minHeight 用系统换算公式 (70*n-30)：
+    3 列 → 180dp   2 行 → 110dp
+  可拖：横向 2~3 列，纵向 1~5 行。
+  resizeMode 双向可调，CourseWidget 按实际高度决定显示几行。
+
+  ★ 别再被"改尺寸会炸"误导（2026-10-26 的教训）：
+    1.66.12 把默认改成 4×2 后桌面报「载入窗口小部件时出现问题」，
+    我以为是尺寸契约的问题，连着 7 个版本改来改去都不对。
+    抓 logcat 才看到真正的原因在 layout/widget_row.xml：
+      Class not allowed to be inflated android.view.View
+    裸 <View> 不在 RemoteViews 白名单里，有课时才会 inflate 到那一行 ——
+    尺寸是背锅的。所以这里改尺寸是安全的。
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="70dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_course"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:previewLayout="@layout/widget_course"
+    android:previewImage="@drawable/widget_preview"
+    android:description="@string/widget_desc" />

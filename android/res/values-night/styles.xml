@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 深色模式下的主题。与 values/styles.xml 成对存在，缺一个 WebView 就不会上报 dark。 -->
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#14171C</item>
+    </style>
+</resources>

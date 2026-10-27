@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>北邮课程表 · 改版对照（390×844 真机尺寸）</title>
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 26px 24px 40px;
+        background: #eef1f3;
+        font: 13px/1.5 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+        color: #1d2b25;
+      }
+      h1 { font-size: 16px; margin: 0 0 6px; }
+      h2 { font-size: 13.5px; margin: 34px 0 12px; color: #2f6a53; }
+      p.hint { margin: 0 0 20px; color: #6b7a73; font-size: 12.5px; }
+      p.hint b { color: #2f6a53; }
+      .row { display: flex; gap: 22px; flex-wrap: wrap; }
+      .col { display: flex; flex-direction: column; }
+      .label { font-size: 12px; color: #41544b; margin: 0 0 8px; font-weight: 600; }
+      .label span { font-weight: 400; color: #7d8b85; }
+      .phone {
+        width: 390px;
+        height: 844px;
+        border-radius: 28px;
+        background: #fff;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(20, 45, 35, 0.14), 0 0 0 1px rgba(20, 45, 35, 0.06);
+      }
+      .phone > iframe { width: 390px; height: 844px; border: 0; display: block; }
+      @media (max-width: 900px) { body { padding: 16px 12px 32px; } }
+    </style>
+  </head>
+  <body>
+    <h1>改版对照（真实渲染，不是设计稿）</h1>
+    <p class="hint">
+      下面每个 iframe 都是本机跑起来的真实应用（<code>?demo=1</code> 载入示例课，390×844 真机尺寸）。
+      第二排的弹层由页面脚本调用应用自身的 <code>openSlotSheet()</code> 打开，和手指点空白格是同一套代码。
+    </p>
+
+    <h2>本轮：课表 → 点空白格 → 添加补课</h2>
+    <div class="row">
+      <div class="col">
+        <div class="label">补课弹层 <span>（原生 select 已换掉：两行式字段 + 课程色块）</span></div>
+        <div class="phone"><iframe id="f4" src="/?demo=1#/timetable"></iframe></div>
+      </div>
+      <div class="col">
+        <div class="label">选课程 <span>（搜索 + 首字色块 + 对勾）</span></div>
+        <div class="phone"><iframe id="f5" src="/?demo=1#/timetable"></iframe></div>
+      </div>
+      <div class="col">
+        <div class="label">选节次 <span>（上午 / 下午 / 晚上分组 + 序号）</span></div>
+        <div class="phone"><iframe id="f6" src="/?demo=1#/timetable"></iframe></div>
+      </div>
+    </div>
+
+    <h2>上一轮：两处长列表</h2>
+    <div class="row">
+      <div class="col">
+        <div class="label">单课程提醒 <span>（色块徽章 + 整行可点）</span></div>
+        <div class="phone"><iframe src="/?demo=1#/reminder/courses"></iframe></div>
+      </div>
+      <div class="col">
+        <div class="label">节次时间表 <span>（分组 + 序号徽章）</span></div>
+        <div class="phone"><iframe src="/?demo=1#/settings/periods"></iframe></div>
+      </div>
+      <div class="col">
+        <div class="label">设置 · 入口页 <span>（未改动，供对照）</span></div>
+        <div class="phone"><iframe src="/?demo=1#/settings"></iframe></div>
+      </div>
+    </div>
+
+    <script>
+      // 等 iframe 里的应用启动完（模块加载是异步的），再替用户点开弹层
+      function whenReady(frame, run) {
+        const started = Date.now();
+        const tick = () => {
+          const win = frame.contentWindow;
+          if (win && win.__buptApp && win.__buptApp.openSlotSheet) {
+            try {
+              run(win);
+            } catch (err) {
+              /* 截图用，出错不打断 */
+            }
+            return;
+          }
+          if (Date.now() - started < 8000) setTimeout(tick, 120);
+        };
+        tick();
+      }
+
+      const openSheet = (frame, target) =>
+        whenReady(frame, (win) => {
+          win.__buptApp.openSlotSheet('2026-10-23', 3);
+          if (!target) return;
+          setTimeout(() => {
+            const trigger = win.document.querySelector('[data-pick-id="' + target + '"]');
+            if (trigger) trigger.click();
+          }, 420);
+        });
+
+      openSheet(document.getElementById('f4'), null);
+      openSheet(document.getElementById('f5'), 'slot-course');
+      openSheet(document.getElementById('f6'), 'slot-start');
+    </script>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  桌面小组件主布局（4×3 基准，可上下缩放）。
+
+  ★ RemoteViews 只认这一小撮控件（LinearLayout / TextView / View / ImageView …），
+    不能放 WebView、不能自定义绘制 —— 所以这里是"列表"而不是"迷你课程表网格"。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="26dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false">
+
+        <TextView
+            android:id="@+id/w_head"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text"
+            android:text="@string/widget_empty_title" />
+
+        <TextView
+            android:id="@+id/w_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="11sp"
+            android:textColor="@color/widget_sub"
+            android:paddingLeft="6dp" />
+    </LinearLayout>
+
+    <!--
+      ★ 高度吃满 + 垂直居中，而不是 wrap_content 顶在上方：
+        桌面的格子高度因机型/网格密度差别很大（同一个 4×3 可能是 180dp 也可能是 330dp），
+        行数又只取决于"今天有几门课"，所以顶部对齐一定会在底部留一大块空白。
+        居中之后，三门课的卡片在任何高度下看着都是"摆好的"。
+    -->
+    <LinearLayout
+        android:id="@+id/w_rows"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_vertical" />
+
+    <TextView
+        android:id="@+id/w_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:lineSpacingExtra="2dp"
+        android:textColor="@color/widget_sub"
+        android:visibility="gone" />
+</LinearLayout>

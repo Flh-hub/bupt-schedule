@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bupt.schedule"
+    android:versionCode="118"
+    android:versionName="1.11.3">
+
+    <!-- minSdk 24：ColorOS 上能覆盖到 Android 7 以后的机型；targetSdk 33：
+         不触发 Android 15 的强制 edge-to-edge，刘海/手势条由系统让位给 WebView，
+         网页里的 env(safe-area-inset-*) 也就不需要额外补偿。 -->
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="33" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 上课提醒：系统闹钟 + 通知（13+ 需要运行时授权） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- ★ 流体云 / Live Updates 的硬性门槛：没有它系统一律不提升，且**静默失败**。
+         非运行时权限，装包即生效。名字要原样写（android.Manifest.permission 里还没这个常量）。 -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- ★★ 精确闹钟的**免手动授权**通道（Android 13+）。
+         SCHEDULE_EXACT_ALARM 从 12 起是"特殊权限"，默认关闭、要用户自己去系统设置里开；
+         国内 ROM 上十有八九是关的，于是 canScheduleExactAlarms() 返回 false，
+         所有 setExact / setAlarmClock 全部退化成可以漂移十几分钟的普通闹钟 ——
+         2026-10-24 真机就是这个原因，"胶囊一直挂 5 分钟"根本不是刷新代码的问题。
+         USE_EXACT_ALARM 是 normal 权限，**装包即授予**，专门给闹钟/日历类应用。
+         我们做的就是上课闹钟，语义正当；sideload 也不受 Play 的政策审核限制。
+         两个都声明：13+ 走 USE_EXACT_ALARM 自动通过，12/12L 仍回落到上面那个。 -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- ★ 1.35.0：「N分后上课」要靠前台服务自己逐刻重发通知。
+         系统闹钟在国内 ROM 上压得太狠（实测能把每分钟一次压成两分钟一次），
+         而用户看胶囊时屏幕必然亮着 —— 亮屏时前台服务的 Handler 跑得很稳，
+         不需要唤醒锁、不需要精确闹钟权限。 -->
+    <!-- 申请「忽略电池优化」白名单：国内 ROM 会把没进白名单的前台服务在几十秒后清掉，
+         胶囊文字就会停在最后一刻不动（2026-10-24 真机实测）。 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!--
+      包可见性（Android 11+）：要枚举系统"耗电管理"页的 Activity 来定位
+      「耗电行为控制」那一页，就必须先声明能看到这几个包，否则 getPackageInfo 直接抛异常。
+      只声明系统电池相关包，不申请 QUERY_ALL_PACKAGES。
+    -->
+    <queries>
+        <package android:name="com.oplus.battery" />
+        <package android:name="com.coloros.oppoguardelf" />
+        <package android:name="com.oplus.powermanager" />
+        <package android:name="com.oplus.appdetail" />
+        <!-- 其它品牌的「后台运行」页：三星有官方 deeplink，小米/华为是社区实践，
+             vivo 没有可靠来源所以不列。列出来是为了 Android 11+ 的包可见性，
+             否则显式 ComponentName 起不来（真机表现为"点了没反应"）。 -->
+        <package android:name="com.samsung.android.lool" />
+        <package android:name="com.miui.powerkeeper" />
+        <package android:name="com.huawei.systemmanager" />
+        <package android:name="com.hihonor.systemmanager" />
+    </queries>
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:hardwareAccelerated="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          桌面小组件（1.16.0）。exported 必须为 true：APPWIDGET_UPDATE 是系统（桌面进程）
+          发过来的广播，设成 false 桌面根本唤不醒它。
+        -->
+        <receiver
+            android:name=".CourseWidget"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/course_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 倒计时保鲜服务：课前那几分钟自己刷胶囊文字，见 ClassRefreshService 注释 -->
+        <service
+            android:name=".ClassRefreshService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="countdown refresh for an upcoming class reminder" />
+        </service>
+
+        <activity
+            android:name=".JwglActivity"
+            android:exported="false"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|uiMode"
+            android:windowSoftInputMode="adjustResize" />
+    </application>
+</manifest>

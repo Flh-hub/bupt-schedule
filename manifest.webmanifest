@@ -1,0 +1,39 @@
+{
+  "name": "北邮课程表",
+  "short_name": "北邮课表",
+  "description": "北邮课程表 · 离线可用，节假日自动静默，支持导出系统日历提醒",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "background_color": "#F5F6F7",
+  "theme_color": "#013A89",
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

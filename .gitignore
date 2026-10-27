@@ -1,0 +1,39 @@
+# 构建产物（每次打包重新生成，不进版本库）
+android/build/
+android/dist/
+*.apk
+*.idsig
+
+# 依赖
+node_modules/
+
+# 项目记忆与备份：内部工作记录，不对外发布
+.workbuddy/
+.workbuddy-ai/
+_backup-memory-*/
+
+# 临时文件与截图
+.tmp-*
+.shots/
+*.log
+probe__*.html
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# 临时截图（多为手机全屏截图，含屏幕内容，绝不入库）
+/.s*.png
+/.probe.png
+/.shot*.png
+/.timecol*.png
+/.check*.png
+
+# 图标生成的中间产物（成品已进 android/res/drawable-*）
+.assets/
+
+# WorkBuddy 部署产物
+*.genie

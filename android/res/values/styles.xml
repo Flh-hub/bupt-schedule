@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ★ 主题必须按深浅色分成两份（values / values-night），不能写死 Light。
+
+  为什么：WebView 的 `prefers-color-scheme` 判的是**宿主应用的主题亮暗**，
+  不是系统的深色开关。Activity 用 Theme.Material.Light 时，网页里
+  `@media (prefers-color-scheme: dark)` 永远不匹配 —— 系统切了深色，页面还是白的
+  （2026-10-27 真机验证踩到的）。
+
+  所以：浅色用 Light 主题，深色用暗色主题，WebView 才会如实上报 dark。
+-->
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- 页面自己画底色，这里只影响 WebView 之外的原生控件与对话框 -->
+        <item name="android:windowBackground">#FFFFFF</item>
+    </style>
+</resources>

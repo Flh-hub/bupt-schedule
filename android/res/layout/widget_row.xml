@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  小组件里的一行课。由 CourseWidget 用 RemoteViews.addView 动态塞进 w_rows，
+  所以这里**不要**写死任何文本，全部由 Java 侧 setTextViewText 填。
+
+  ★ 版式（1.66.22 起）：课名独占一行，时间/地点/节次挤在第二行。
+    原来是"左边时间列 + 右边课名"，但默认尺寸改成 2×2 后只有 110dp 宽，
+    减去内边距和色条只剩 80dp 左右 —— 时间列一占（42dp），课名就只剩 3 个字。
+    改成上下两行后，课名能拿到全部 80dp。
+
+  ★ 色条必须是 TextView，不能是 <View>：
+    RemoteViews 只允许 inflate 带 @RemoteView 注解的类，裸 android.view.View 会抛
+    「Class not allowed to be inflated android.view.View」，整块变成系统错误块。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_row"
+    android:layout_width="match_parent"
+    android:layout_height="32dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:baselineAligned="false">
+
+    <TextView
+        android:id="@+id/w_row_bar"
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:layout_marginRight="6dp"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:background="@color/widget_bar" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/w_row_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="12sp"
+            android:textColor="@color/widget_text" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:baselineAligned="false">
+
+            <TextView
+                android:id="@+id/w_row_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textSize="10sp"
+                android:textColor="@color/widget_sub" />
+
+            <TextView
+                android:id="@+id/w_row_sub"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="10sp"
+                android:textColor="@color/widget_sub" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

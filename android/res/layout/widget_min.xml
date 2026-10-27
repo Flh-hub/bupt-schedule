@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  最后兜底布局：**只有一个 TextView**。
+
+  什么时候会用到：`widget_course` 在桌面进程里 apply 失败时（那会显示成系统的
+  「载入窗口小部件时出现问题」）。RemoteViews 的失败发生在**桌面进程**，
+  我们这边 catch 不到 —— 所以只能准备一个简单到不可能失败的布局，
+  在构建阶段就把"复杂版"换掉。
+
+  排查顺序：先看正常渲染有没有回来；回来了说明 widget_course 里有桌面不认的东西。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_min_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/widget_bg"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <TextView
+        android:id="@+id/w_min_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxLines="2"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/widget_text"
+        android:text="@string/widget_placeholder" />
+</LinearLayout>

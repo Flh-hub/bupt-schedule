@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 小组件配色（深色）：系统开深色模式时自动生效，不需要 App 自己判断 -->
+<resources>
+    <color name="widget_bg">#F522262B</color>
+    <color name="widget_text">#FFF2F4F6</color>
+    <color name="widget_sub">#FF9AA4AE</color>
+    <color name="widget_line">#20FFFFFF</color>
+    <color name="widget_bar">#FF7C93FF</color>
+</resources>

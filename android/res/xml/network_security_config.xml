@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 教务系统部分页面（强智 jsxsd 的旧模板）仍会引用 http 资源，
+     所以只对 bupt.edu.cn 放开明文；其它域一律要求 https。 -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">bupt.edu.cn</domain>
+        <domain includeSubdomains="true">appassets.androidplatform.net</domain>
+    </domain-config>
+</network-security-config>

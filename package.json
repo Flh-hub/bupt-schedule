@@ -1,0 +1,13 @@
+{
+  "name": "bupt-schedule",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "北邮课程表 · 零构建 PWA（HTML + CSS + 原生 ES Module）",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "start": "node server.js",
+    "build:android": "node scripts/build-android.mjs",
+    "probe:native": "node .probe-native.mjs"
+  }
+}
