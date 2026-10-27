@@ -7,11 +7,6 @@ android/dist/
 # 依赖
 node_modules/
 
-# 项目记忆与备份：内部工作记录，不对外发布
-.workbuddy/
-.workbuddy-ai/
-_backup-memory-*/
-
 # 临时文件与截图
 .tmp-*
 .shots/
@@ -35,5 +30,5 @@ desktop.ini
 # 图标生成的中间产物（成品已进 android/res/drawable-*）
 .assets/
 
-# WorkBuddy 部署产物
+# 部署工具产物（各环境自生成）
 *.genie
