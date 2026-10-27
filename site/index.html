@@ -511,8 +511,10 @@
 
   .dl-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 18px;
+    /* 只剩 Android 一张卡：限制宽度并居中，别被拉到 1120px 满幅 */
+    max-width: 520px;
+    margin: 0 auto;
   }
 
   .dl-card {
@@ -546,17 +548,6 @@
   }
 
   .dl-top b { font-size: 16px; letter-spacing: -.01em; }
-
-  .badge {
-    margin-left: auto;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--brand);
-    background: var(--brand-soft);
-    border-radius: 999px;
-    padding: 3px 9px;
-    letter-spacing: .02em;
-  }
 
   .spec {
     display: grid;
@@ -827,7 +818,7 @@
   <div class="wrap">
     <div class="head center">
       <h2>下载</h2>
-      <p>Android 直装包，或者自己部署一份网页版。</p>
+      <p>Android 直装包，下载即用。</p>
     </div>
 
     <div class="dl-grid">
@@ -835,7 +826,6 @@
         <div class="dl-top">
           <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
           <b>Android</b>
-          <span class="badge">推荐</span>
         </div>
         <dl class="spec">
           <dt>大小</dt><dd>418 KB</dd>
@@ -846,24 +836,6 @@
           <li>下载后点开安装，按提示允许「安装未知应用」</li>
           <li>ColorOS 会弹「个人信息收集提醒」，属系统固定提示，本应用不联网收集</li>
           <li>首次打开按引导导入课表，再给通知和后台权限</li>
-        </ol>
-      </div>
-
-      <div class="dl-card">
-        <div class="dl-top">
-          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
-          <b>浏览器 / PWA</b>
-        </div>
-        <dl class="spec">
-          <dt>形态</dt><dd>纯静态网页</dd>
-          <dt>依赖</dt><dd>无（零构建、零 CDN）</dd>
-          <dt>适合</dt><dd>电脑上看课表、自己改着玩</dd>
-        </dl>
-        <a class="btn btn-ghost" href="https://github.com/Flh-hub/bupt-schedule">获取源码</a>
-        <ol class="steps">
-          <li>克隆仓库，在目录里执行 <code>python -m http.server 8080</code></li>
-          <li>浏览器打开 <code>localhost:8080</code>（不能直接双击 HTML 文件）</li>
-          <li>手机浏览器里可选「添加到主屏幕」，效果接近原生</li>
         </ol>
       </div>
     </div>
