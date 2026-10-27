@@ -401,6 +401,11 @@
     object-position: top center;
   }
 
+  /* 手机竖屏截图（约 1:2.16）比横图高得多，放宽一点，让「补班日」那组选项也能看到 */
+  .shot-media.is-tall img {
+    max-height: 660px;
+  }
+
   @media (max-width: 860px) {
     .shot { grid-template-columns: 1fr; gap: 30px; }
     .shot-media img { max-height: 400px; }
@@ -753,8 +758,8 @@
           <li>放假某一天可以单独设成休息</li>
         </ul>
       </div>
-      <div class="shot-media">
-        <img src="img/calendar.png" alt="节假日与调休设置界面" loading="lazy" decoding="async" width="1680" height="3620" />
+      <div class="shot-media is-tall">
+        <img src="img/holiday.png" alt="节假日与调休设置界面" loading="lazy" decoding="async" width="390" height="844" />
       </div>
     </div>
 
@@ -790,7 +795,7 @@
         </ul>
       </div>
       <div class="shot-media">
-        <img src="img/chip.png" alt="流体云胶囊倒计时效果" loading="lazy" decoding="async" width="720" height="412" />
+        <img src="img/chip.png" alt="流体云胶囊倒计时效果" loading="lazy" decoding="async" width="720" height="108" />
       </div>
     </div>
   </div>
