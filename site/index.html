@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>北邮课程表 · 离线可用的课表 App</title>
+<title>专属 bupter 的课程表 · 离线可用的课表 App</title>
 <meta name="description" content="自动抓取教务课表，课前准时提醒，桌面小组件随时看。不需要账号，没有服务器，数据只存在这台手机上。" />
 <meta name="theme-color" content="#013A89" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)" />
@@ -295,7 +295,8 @@
     box-shadow: var(--shadow);
   }
 
-  .card .ico {
+  .card .ico,
+  .soon-card .ico {
     width: 38px;
     height: 38px;
     border-radius: 11px;
@@ -305,7 +306,8 @@
     margin-bottom: 16px;
   }
 
-  .card .ico svg {
+  .card .ico svg,
+  .soon-card .ico svg {
     width: 19px;
     height: 19px;
     stroke: var(--brand);
@@ -313,6 +315,56 @@
     stroke-width: 1.9;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  /* 开发中的功能：虚线边框 + 降一档的颜色，跟上面四张已上线的卡区分开。
+     不做成第五张卡，是因为 4 列网格塞 5 个会剩一个孤零零的格子。 */
+  .soon-card {
+    margin-top: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--radius);
+    background: var(--bg-2);
+  }
+
+  .soon-card .ico {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    background: var(--bg-2);
+  }
+
+  .soon-card .ico svg { stroke: var(--muted); }
+
+  .soon-body b {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15.5px;
+    letter-spacing: -.01em;
+    color: var(--text-2);
+  }
+
+  .soon-body p {
+    margin: 6px 0 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .tag-soon {
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: .02em;
+    color: var(--muted);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 1px 8px;
   }
 
   .card h3 {
@@ -653,7 +705,7 @@
 <header class="hero" id="top">
   <div class="wrap">
     <span class="eyebrow"><span class="dot"></span>开源 · 无需账号 · 数据只在本机</span>
-    <h1>你的课表，<span class="nowrap-phrase">不该困在浏览器里</span></h1>
+    <h1><span class="nowrap-phrase">专属 bupter 的</span><span class="nowrap-phrase">课程表</span></h1>
     <p class="lede">
       自动抓取教务系统的课表，课前准时提醒，桌面上抬眼就能看。
       不需要注册，没有服务器，所有数据只存在这台手机上。
@@ -720,6 +772,16 @@
         </div>
         <h3>调课不求人</h3>
         <p>停课、改时间、换教室、补课、临时活动 —— 拖一下就改完，随时能撤销。</p>
+      </div>
+    </div>
+
+    <div class="soon-card">
+      <div class="ico">
+        <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 12h5M10 16h5"/></svg>
+      </div>
+      <div class="soon-body">
+        <b>查看作业 <i class="tag-soon">开发中</i></b>
+        <p>作业列表和截止提醒正在做，会和课表放在同一个入口 —— 不用再开第二个 App 对作业。</p>
       </div>
     </div>
   </div>
