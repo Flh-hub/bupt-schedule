@@ -390,6 +390,45 @@
     box-shadow: var(--shadow);
   }
 
+  /* 胶囊示意：纯 CSS 画，文字与 ClassCard.timeChipText() 一致。
+     用截图的话，文案一改图就过期了（上一版就是「还有5分钟」的老方案）。 */
+  .chip-canvas {
+    display: grid;
+    place-items: center;
+    gap: 13px;
+    padding: 44px 20px;
+    min-height: 230px;
+    background: linear-gradient(150deg, #0c1a30 0%, #13294a 100%);
+    border-color: #1d3357;
+  }
+
+  .chip-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: #08090b;
+    color: #fff;
+    border-radius: 999px;
+    padding: 13px 24px;
+    font-size: 16.5px;
+    font-weight: 650;
+    letter-spacing: -.01em;
+    box-shadow: 0 0 0 2px rgba(77, 142, 247, .55), 0 12px 34px rgba(0, 0, 0, .55);
+  }
+
+  .chip-ico {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2.5px solid #4d8ef7;
+    flex-shrink: 0;
+  }
+
+  .chip-note {
+    font-size: 12.5px;
+    color: #8ba4c6;
+  }
+
   .shot-media img {
     display: block;
     width: 100%;
@@ -513,111 +552,6 @@
     place-items: center;
   }
 
-  /* ---------------------------------------------------------------- 更新日志 */
-
-  .log {
-    display: grid;
-    gap: 0;
-    border-left: 2px solid var(--line);
-    padding-left: 0;
-    margin-left: 6px;
-  }
-
-  .log-item {
-    position: relative;
-    padding: 0 0 30px 26px;
-  }
-
-  .log-item::before {
-    content: "";
-    position: absolute;
-    left: -7px;
-    top: 7px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--surface);
-    border: 2px solid var(--line-2);
-  }
-
-  .log-item.now::before { border-color: var(--brand); background: var(--brand); }
-
-  .log-item h3 {
-    font-size: 16px;
-    margin: 0 0 4px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .log-item time {
-    font-size: 12.5px;
-    color: var(--muted);
-    font-weight: 500;
-  }
-
-  .log-item ul {
-    margin: 8px 0 0;
-    padding-left: 18px;
-    color: var(--text-2);
-    font-size: 14.5px;
-    display: grid;
-    gap: 4px;
-  }
-
-  /* ---------------------------------------------------------------- FAQ */
-
-  .faq { display: grid; gap: 10px; max-width: 780px; }
-
-  details {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 13px;
-    padding: 3px 20px;
-  }
-
-  summary {
-    cursor: pointer;
-    font-weight: 650;
-    font-size: 15.5px;
-    padding: 15px 0;
-    list-style: none;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    letter-spacing: -.01em;
-  }
-
-  summary::-webkit-details-marker { display: none; }
-
-  summary::after {
-    content: "+";
-    margin-left: auto;
-    font-size: 19px;
-    font-weight: 400;
-    color: var(--muted);
-    transition: transform .18s ease;
-  }
-
-  details[open] summary::after { transform: rotate(45deg); }
-
-  details p {
-    margin: 0 0 16px;
-    color: var(--text-2);
-    font-size: 14.5px;
-  }
-
-  details code {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 5px;
-    padding: 1px 5px;
-    font-size: 13px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
-
   /* ---------------------------------------------------------------- 页脚 */
 
   footer {
@@ -656,8 +590,6 @@
       <a href="#features">功能</a>
       <a href="#shots">界面</a>
       <a href="#download">下载</a>
-      <a href="#changelog">更新日志</a>
-      <a href="#faq">常见问题</a>
     </div>
     <a class="nav-cta" href="#download">下载</a>
   </div>
@@ -794,8 +726,9 @@
           <li>不用时一键关掉，不常驻</li>
         </ul>
       </div>
-      <div class="shot-media">
-        <img src="img/chip.png" alt="流体云胶囊倒计时效果" loading="lazy" decoding="async" width="720" height="108" />
+      <div class="shot-media chip-canvas">
+        <span class="chip-pill"><i class="chip-ico"></i>5分钟后上课</span>
+        <span class="chip-note">锁屏与状态栏上的实时动态胶囊</span>
       </div>
     </div>
   </div>
@@ -816,10 +749,8 @@
           <span class="badge">推荐</span>
         </div>
         <dl class="spec">
-          <dt>版本</dt><dd>1.11.3</dd>
           <dt>大小</dt><dd>418 KB</dd>
           <dt>系统</dt><dd>Android 8.0 及以上</dd>
-          <dt>校验</dt><dd><code>sha256 0f59324c…</code></dd>
         </dl>
         <a class="btn btn-primary" href="https://github.com/Flh-hub/bupt-schedule/releases/download/v1.11.3/bupt-schedule-1.11.3.apk">下载 APK</a>
         <ol class="steps">
@@ -850,104 +781,7 @@
   </div>
 </section>
 
-<section class="section alt" id="changelog">
-  <div class="wrap">
-    <div class="head">
-      <h2>更新日志</h2>
-      <p>每个版本都记在仓库里，点开可以看完整的提交记录。</p>
-    </div>
 
-    <div class="log">
-      <div class="log-item now">
-        <h3>1.11.3 <time>2026-10-27</time></h3>
-        <ul>
-          <li>同名课程自动合并：「数学分析(上) O / P」合成一节，选课程时不再出现三个同名项</li>
-          <li>课名统一显示为基础名，教学班后缀不再出现在课表和详情页</li>
-          <li>后台运行设置页文案精简，一屏能读完</li>
-        </ul>
-      </div>
-      <div class="log-item">
-        <h3>1.11.2 <time>2026-10-27</time></h3>
-        <ul>
-          <li>修复深色模式下底部导航栏仍是白色的问题</li>
-        </ul>
-      </div>
-      <div class="log-item">
-        <h3>1.11.1 <time>2026-10-27</time></h3>
-        <ul>
-          <li>修复深色模式在真机上不生效（宿主主题未随系统切换）</li>
-        </ul>
-      </div>
-      <div class="log-item">
-        <h3>1.11.0 <time>2026-10-27</time></h3>
-        <ul>
-          <li>新增深色模式，覆盖课表、提醒、设置与各类浮层</li>
-          <li>桌面小组件同步支持浅色 / 深色两套配色</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="faq">
-  <div class="wrap">
-    <div class="head">
-      <h2>常见问题</h2>
-    </div>
-
-    <div class="faq">
-      <details open>
-        <summary>课表数据存在哪里？会上传吗？</summary>
-        <p>
-          只存在这台手机的本地存储里，不上传任何服务器。App 里唯一的联网行为是在你主动点击导入时，
-          访问学校教务系统抓取课表；此外没有任何统计、推荐或第三方 SDK。
-        </p>
-      </details>
-
-      <details>
-        <summary>为什么一定要选「允许完全后台行为」？</summary>
-        <p>
-          系统的默认省电策略会在电量紧张时清掉 App 已排的闹钟，课前提醒就哑了。
-          改成「允许完全后台行为」之后，闹钟和胶囊倒计时才不会被撤销。
-          这不是为了常驻后台 —— 应用平时并不运行，只是保住已排的提醒。
-        </p>
-      </details>
-
-      <details>
-        <summary>安装时弹「个人信息收集提醒」是什么？</summary>
-        <p>
-          这是 ColorOS / 部分国产系统对所有「非应用商店安装」的应用都会弹的固定提示，不是本应用在请求什么。
-          点「继续安装」即可。
-        </p>
-      </details>
-
-      <details>
-        <summary>换手机了，课表怎么搬过去？</summary>
-        <p>
-          旧手机：设置 → 导出备份，会得到一个 JSON 文件。
-          新手机：设置 → 导入备份，选中这个文件即可。调课记录和节假日设置都会一并迁移。
-        </p>
-      </details>
-
-      <details>
-        <summary>提醒有时候不响，怎么办？</summary>
-        <p>
-          按顺序检查三处：① 通知权限是否开启；② 「耗电管理」是否设为「允许完全后台行为」；
-          ③ 是否开启了系统的「专注模式 / 免打扰」。这三处都会拦截提醒，而应用本身没有权限查询它们的状态。
-        </p>
-      </details>
-
-      <details>
-        <summary>为什么开源？</summary>
-        <p>
-          课表里包含你的课程、教室和作息，这类数据不该交给不透明的服务端。
-          代码公开，任何人都能验证它确实没有上传行为。仓库在
-          <a href="https://github.com/Flh-hub/bupt-schedule">GitHub</a>，欢迎提 issue。
-        </p>
-      </details>
-    </div>
-  </div>
-</section>
 
 <footer>
   <div class="wrap foot-in">
