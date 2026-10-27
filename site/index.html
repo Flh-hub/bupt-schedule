@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>北邮课程表 · 离线可用的课表 App</title>
+<meta name="description" content="自动抓取教务课表，课前准时提醒，桌面小组件随时看。不需要账号，没有服务器，数据只存在这台手机上。" />
+<meta name="theme-color" content="#013A89" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)" />
+<style>
+  :root {
+    color-scheme: light dark;
+    --brand: #013a89;
+    --brand-2: #0d4fa8;
+    --brand-soft: #eef3fb;
+    --bg: #ffffff;
+    --bg-2: #f6f7f9;
+    --surface: #ffffff;
+    --text: #14171c;
+    --text-2: #4a5260;
+    --muted: #7a8390;
+    --line: #e6e9ee;
+    --line-2: #d5dae2;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 12px 32px rgba(16, 24, 40, .06);
+    --wrap: 1080px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --brand: #4d8ef7;
+      --brand-2: #6ea3ff;
+      --brand-soft: #17233a;
+      --bg: #0b0d10;
+      --bg-2: #121519;
+      --surface: #1a1e24;
+      --text: #e8eaee;
+      --text-2: #b6bcc6;
+      --muted: #8b93a0;
+      --line: #262b33;
+      --line-2: #323841;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 16px 40px rgba(0, 0, 0, .45);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .wrap {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------------------------------------------------------------- 顶栏 */
+
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .nav-in {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: -.01em;
+    flex-shrink: 0;
+  }
+
+  .logo-mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--brand) 0%, #012f70 100%);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 22px;
+    margin-left: auto;
+    font-size: 14px;
+  }
+
+  .nav-links a { color: var(--text-2); }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+  .nav-cta {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 9px;
+    background: var(--brand);
+    color: #fff !important;
+    text-decoration: none !important;
+  }
+
+  @media (max-width: 720px) {
+    .nav-links { display: none; }
+    .nav-cta { margin-left: auto; }
+  }
+
+  /* ---------------------------------------------------------------- Hero */
+
+  .hero {
+    padding: 72px 0 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 顶部一层极淡的网格纹理，替代图片充当视觉锚点 */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 420px;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0, #000 0%, transparent 75%);
+    opacity: .55;
+    pointer-events: none;
+  }
+
+  .hero > * { position: relative; }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand);
+    background: var(--brand-soft);
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 24px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+
+  h1 {
+    font-size: clamp(34px, 6vw, 58px);
+    line-height: 1.14;
+    letter-spacing: -.028em;
+    font-weight: 800;
+    margin: 0 0 20px;
+    max-width: 15em;
+    margin-inline: auto;
+  }
+
+  /* 中文默认可在任意汉字间断行，「不该」容易被拆成「不 / 该」。
+     后半句做成原子内联块，整块换行才自然。 */
+  h1 .nowrap-phrase {
+    display: inline-block;
+  }
+
+  .hero p.lede {
+    font-size: clamp(15px, 2.2vw, 18px);
+    color: var(--text-2);
+    max-width: 34em;
+    margin: 0 auto 34px;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 48px;
+    padding: 0 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 650;
+    text-decoration: none !important;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+
+  .btn:active { transform: scale(.975); }
+
+  .btn-primary {
+    background: var(--brand);
+    color: #fff;
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--brand) 30%, transparent);
+  }
+
+  .btn-primary:hover { background: var(--brand-2); }
+
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--line-2);
+  }
+
+  .btn-ghost:hover { background: var(--bg-2); }
+
+  .btn small {
+    font-weight: 500;
+    opacity: .75;
+    font-size: 12.5px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 13px;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .hero-meta svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+  /* ---------------------------------------------------------------- 特性四宫格 */
+
+  .section { padding: 64px 0; }
+  .section.alt { background: var(--bg-2); border-block: 1px solid var(--line); }
+
+  .head { max-width: 40em; margin-bottom: 42px; }
+
+  .head.center { margin-inline: auto; text-align: center; }
+
+  h2 {
+    font-size: clamp(25px, 3.4vw, 34px);
+    line-height: 1.25;
+    letter-spacing: -.022em;
+    font-weight: 750;
+    margin: 0 0 12px;
+  }
+
+  .head p { color: var(--text-2); margin: 0; font-size: 16px; }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px 22px;
+    box-shadow: var(--shadow);
+  }
+
+  .card .ico {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--brand-soft);
+    display: grid;
+    place-items: center;
+    margin-bottom: 16px;
+  }
+
+  .card .ico svg {
+    width: 19px;
+    height: 19px;
+    stroke: var(--brand);
+    fill: none;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .card h3 {
+    font-size: 16.5px;
+    margin: 0 0 7px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  .card p {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+
+  /* ---------------------------------------------------------------- 图文交替 */
+
+  .shot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+
+  .shot + .shot { margin-top: 84px; }
+
+  .shot.flip .shot-media { order: 2; }
+
+  .shot-body h3 {
+    font-size: clamp(21px, 2.6vw, 26px);
+    letter-spacing: -.02em;
+    margin: 0 0 14px;
+    font-weight: 730;
+  }
+
+  .shot-body p {
+    color: var(--text-2);
+    margin: 0 0 18px;
+    font-size: 15.5px;
+  }
+
+  .shot-body ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 9px;
+  }
+
+  .shot-body li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 14.5px;
+    color: var(--text-2);
+  }
+
+  .shot-body li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 9px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brand);
+    opacity: .55;
+  }
+
+  .shot-media {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    box-shadow: var(--shadow);
+  }
+
+  .shot-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    /* 长截图（有的素材是 1:2.15 的四机并排图）会把整段拉得过高，
+       限高 + 顶部对齐，只展示最有信息量的上半部分 */
+    max-height: 540px;
+    object-fit: cover;
+    object-position: top center;
+  }
+
+  @media (max-width: 860px) {
+    .shot { grid-template-columns: 1fr; gap: 30px; }
+    .shot-media img { max-height: 400px; }
+    .shot.flip .shot-media { order: 0; }
+    .section { padding: 52px 0; }
+    .hero { padding: 56px 0 52px; }
+  }
+
+  /* ---------------------------------------------------------------- 下载 */
+
+  .dl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 18px;
+  }
+
+  .dl-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 24px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dl-card.primary { border-color: color-mix(in srgb, var(--brand) 34%, var(--line)); }
+
+  .dl-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .dl-top svg {
+    width: 26px;
+    height: 26px;
+    stroke: var(--brand);
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  .dl-top b { font-size: 16px; letter-spacing: -.01em; }
+
+  .badge {
+    margin-left: auto;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--brand);
+    background: var(--brand-soft);
+    border-radius: 999px;
+    padding: 3px 9px;
+    letter-spacing: .02em;
+  }
+
+  .spec {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 5px 14px;
+    font-size: 13.5px;
+    color: var(--text-2);
+    margin: 0 0 18px;
+  }
+
+  .spec dt { color: var(--muted); }
+  .spec dd { margin: 0; }
+
+  .dl-card .btn { width: 100%; justify-content: center; margin-top: auto; }
+
+  .steps {
+    margin: 18px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px dashed var(--line-2);
+    counter-reset: s;
+    list-style: none;
+    font-size: 13.5px;
+    color: var(--text-2);
+    display: grid;
+    gap: 8px;
+  }
+
+  .steps li {
+    counter-increment: s;
+    position: relative;
+    padding-left: 26px;
+  }
+
+  .steps li::before {
+    content: counter(s);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: var(--brand-soft);
+    color: var(--brand);
+    font-size: 11px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+  }
+
+  /* ---------------------------------------------------------------- 更新日志 */
+
+  .log {
+    display: grid;
+    gap: 0;
+    border-left: 2px solid var(--line);
+    padding-left: 0;
+    margin-left: 6px;
+  }
+
+  .log-item {
+    position: relative;
+    padding: 0 0 30px 26px;
+  }
+
+  .log-item::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 7px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--line-2);
+  }
+
+  .log-item.now::before { border-color: var(--brand); background: var(--brand); }
+
+  .log-item h3 {
+    font-size: 16px;
+    margin: 0 0 4px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .log-item time {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .log-item ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    color: var(--text-2);
+    font-size: 14.5px;
+    display: grid;
+    gap: 4px;
+  }
+
+  /* ---------------------------------------------------------------- FAQ */
+
+  .faq { display: grid; gap: 10px; max-width: 780px; }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    padding: 3px 20px;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 650;
+    font-size: 15.5px;
+    padding: 15px 0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: -.01em;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+
+  summary::after {
+    content: "+";
+    margin-left: auto;
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--muted);
+    transition: transform .18s ease;
+  }
+
+  details[open] summary::after { transform: rotate(45deg); }
+
+  details p {
+    margin: 0 0 16px;
+    color: var(--text-2);
+    font-size: 14.5px;
+  }
+
+  details code {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 5px;
+    font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ---------------------------------------------------------------- 页脚 */
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 40px 0 52px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .foot-in {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .foot-links { display: flex; gap: 18px; flex-wrap: wrap; }
+  .foot-links a { color: var(--text-2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <a class="logo" href="#top">
+      <span class="logo-mark">邮</span>
+      北邮课程表
+    </a>
+    <div class="nav-links">
+      <a href="#features">功能</a>
+      <a href="#shots">界面</a>
+      <a href="#download">下载</a>
+      <a href="#changelog">更新日志</a>
+      <a href="#faq">常见问题</a>
+    </div>
+    <a class="nav-cta" href="#download">下载</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span>开源 · 无需账号 · 数据只在本机</span>
+    <h1>你的课表，<span class="nowrap-phrase">不该困在浏览器里</span></h1>
+    <p class="lede">
+      自动抓取教务系统的课表，课前准时提醒，桌面上抬眼就能看。
+      不需要注册，没有服务器，所有数据只存在这台手机上。
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/Flh-hub/bupt-schedule/releases/download/v1.11.3/bupt-schedule-1.11.3.apk">
+        下载 Android 版
+        <small>418 KB</small>
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/Flh-hub/bupt-schedule">查看源码</a>
+    </div>
+    <div class="hero-meta">
+      <span>
+        <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M9 12l2 2 4-4"/></svg>
+        无账号
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        无广告
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 5-3.5 8-8 8s-8-3-8-8V7l8-4Z"/></svg>
+        无第三方 SDK
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg>
+        MIT 开源
+      </span>
+    </div>
+  </div>
+</header>
+
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="head center">
+      <h2>专为「不打开的课表」设计</h2>
+      <p>不用每天点开 App 记课程 —— 该提醒的时候提醒，该安静的时候安静。</p>
+    </div>
+    <div class="grid-4">
+      <div class="card">
+        <div class="ico">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+        </div>
+        <h3>一键导入教务</h3>
+        <p>填一次学号密码，自动抓取整学期课表。学校页面改版也能手动登录兜底。</p>
+      </div>
+      <div class="card">
+        <div class="ico">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <h3>课前准点提醒</h3>
+        <p>用系统闹钟而不是定时器，掉电、清后台都不影响。连堂课之间不会重复响。</p>
+      </div>
+      <div class="card">
+        <div class="ico">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M9 9v11"/></svg>
+        </div>
+        <h3>桌面小组件</h3>
+        <p>今天的课直接摆在桌面上，不用解锁进 App。跟随系统深浅色。</p>
+      </div>
+      <div class="card">
+        <div class="ico">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M18 15l3 3-3 3"/></svg>
+        </div>
+        <h3>调课不求人</h3>
+        <p>停课、改时间、换教室、补课、临时活动 —— 拖一下就改完，随时能撤销。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section alt" id="shots">
+  <div class="wrap">
+    <div class="head">
+      <h2>它替你处理那些琐碎判断</h2>
+      <p>节假日到底上不上课、这门课这周有没有、调课之后算不算冲突 —— 这些 App 自己算。</p>
+    </div>
+
+    <div class="shot">
+      <div class="shot-body">
+        <h3>节假日自动静默，调休不会算错</h3>
+        <p>
+          法定假期不打扰；补班日如果不知道按周几上课，它会明确标成「待确认」，
+          而不是擅自当成有课、让你白跑一趟。
+        </p>
+        <ul>
+          <li>调休、补班按国务院安排自动匹配</li>
+          <li>不确定的日子只提醒你去确认，不给结论</li>
+          <li>放假某一天可以单独设成休息</li>
+        </ul>
+      </div>
+      <div class="shot-media">
+        <img src="img/calendar.png" alt="节假日与调休设置界面" loading="lazy" decoding="async" width="1680" height="3620" />
+      </div>
+    </div>
+
+    <div class="shot flip">
+      <div class="shot-body">
+        <h3>桌面上就能看见今天上什么</h3>
+        <p>
+          3×2 的小组件，一行一门课：课名、教室、节次、起止时间。
+          上完的课自动变淡，当前节次一眼可辨。
+        </p>
+        <ul>
+          <li>深浅色跟随系统，不刺眼</li>
+          <li>课程色和 App 内一致，方便对上号</li>
+          <li>点一下直接进 App 对应位置</li>
+        </ul>
+      </div>
+      <div class="shot-media">
+        <img src="img/widget.png" alt="桌面小组件效果" loading="lazy" decoding="async" width="2360" height="1400" />
+      </div>
+    </div>
+
+    <div class="shot">
+      <div class="shot-body">
+        <h3>倒计时就在胶囊里</h3>
+        <p>
+          支持 Android 16 的实时动态胶囊：距离上课还有几分钟，锁屏和状态栏上持续可见，
+          不需要解锁确认。
+        </p>
+        <ul>
+          <li>按整分钟刷新，倒计时不会跳</li>
+          <li>前台服务保活，滑掉后台也不断</li>
+          <li>不用时一键关掉，不常驻</li>
+        </ul>
+      </div>
+      <div class="shot-media">
+        <img src="img/chip.png" alt="流体云胶囊倒计时效果" loading="lazy" decoding="async" width="720" height="412" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="download">
+  <div class="wrap">
+    <div class="head center">
+      <h2>下载</h2>
+      <p>Android 直装包，或者自己部署一份网页版。</p>
+    </div>
+
+    <div class="dl-grid">
+      <div class="dl-card primary">
+        <div class="dl-top">
+          <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+          <b>Android</b>
+          <span class="badge">推荐</span>
+        </div>
+        <dl class="spec">
+          <dt>版本</dt><dd>1.11.3</dd>
+          <dt>大小</dt><dd>418 KB</dd>
+          <dt>系统</dt><dd>Android 8.0 及以上</dd>
+          <dt>校验</dt><dd><code>sha256 0f59324c…</code></dd>
+        </dl>
+        <a class="btn btn-primary" href="https://github.com/Flh-hub/bupt-schedule/releases/download/v1.11.3/bupt-schedule-1.11.3.apk">下载 APK</a>
+        <ol class="steps">
+          <li>下载后点开安装，按提示允许「安装未知应用」</li>
+          <li>ColorOS 会弹「个人信息收集提醒」，属系统固定提示，本应用不联网收集</li>
+          <li>首次打开按引导导入课表，再给通知和后台权限</li>
+        </ol>
+      </div>
+
+      <div class="dl-card">
+        <div class="dl-top">
+          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
+          <b>浏览器 / PWA</b>
+        </div>
+        <dl class="spec">
+          <dt>形态</dt><dd>纯静态网页</dd>
+          <dt>依赖</dt><dd>无（零构建、零 CDN）</dd>
+          <dt>适合</dt><dd>电脑上看课表、自己改着玩</dd>
+        </dl>
+        <a class="btn btn-ghost" href="https://github.com/Flh-hub/bupt-schedule">获取源码</a>
+        <ol class="steps">
+          <li>克隆仓库，在目录里执行 <code>python -m http.server 8080</code></li>
+          <li>浏览器打开 <code>localhost:8080</code>（不能直接双击 HTML 文件）</li>
+          <li>手机浏览器里可选「添加到主屏幕」，效果接近原生</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section alt" id="changelog">
+  <div class="wrap">
+    <div class="head">
+      <h2>更新日志</h2>
+      <p>每个版本都记在仓库里，点开可以看完整的提交记录。</p>
+    </div>
+
+    <div class="log">
+      <div class="log-item now">
+        <h3>1.11.3 <time>2026-10-27</time></h3>
+        <ul>
+          <li>同名课程自动合并：「数学分析(上) O / P」合成一节，选课程时不再出现三个同名项</li>
+          <li>课名统一显示为基础名，教学班后缀不再出现在课表和详情页</li>
+          <li>后台运行设置页文案精简，一屏能读完</li>
+        </ul>
+      </div>
+      <div class="log-item">
+        <h3>1.11.2 <time>2026-10-27</time></h3>
+        <ul>
+          <li>修复深色模式下底部导航栏仍是白色的问题</li>
+        </ul>
+      </div>
+      <div class="log-item">
+        <h3>1.11.1 <time>2026-10-27</time></h3>
+        <ul>
+          <li>修复深色模式在真机上不生效（宿主主题未随系统切换）</li>
+        </ul>
+      </div>
+      <div class="log-item">
+        <h3>1.11.0 <time>2026-10-27</time></h3>
+        <ul>
+          <li>新增深色模式，覆盖课表、提醒、设置与各类浮层</li>
+          <li>桌面小组件同步支持浅色 / 深色两套配色</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="wrap">
+    <div class="head">
+      <h2>常见问题</h2>
+    </div>
+
+    <div class="faq">
+      <details open>
+        <summary>课表数据存在哪里？会上传吗？</summary>
+        <p>
+          只存在这台手机的本地存储里，不上传任何服务器。App 里唯一的联网行为是在你主动点击导入时，
+          访问学校教务系统抓取课表；此外没有任何统计、推荐或第三方 SDK。
+        </p>
+      </details>
+
+      <details>
+        <summary>为什么一定要选「允许完全后台行为」？</summary>
+        <p>
+          系统的默认省电策略会在电量紧张时清掉 App 已排的闹钟，课前提醒就哑了。
+          改成「允许完全后台行为」之后，闹钟和胶囊倒计时才不会被撤销。
+          这不是为了常驻后台 —— 应用平时并不运行，只是保住已排的提醒。
+        </p>
+      </details>
+
+      <details>
+        <summary>安装时弹「个人信息收集提醒」是什么？</summary>
+        <p>
+          这是 ColorOS / 部分国产系统对所有「非应用商店安装」的应用都会弹的固定提示，不是本应用在请求什么。
+          点「继续安装」即可。
+        </p>
+      </details>
+
+      <details>
+        <summary>换手机了，课表怎么搬过去？</summary>
+        <p>
+          旧手机：设置 → 导出备份，会得到一个 JSON 文件。
+          新手机：设置 → 导入备份，选中这个文件即可。调课记录和节假日设置都会一并迁移。
+        </p>
+      </details>
+
+      <details>
+        <summary>提醒有时候不响，怎么办？</summary>
+        <p>
+          按顺序检查三处：① 通知权限是否开启；② 「耗电管理」是否设为「允许完全后台行为」；
+          ③ 是否开启了系统的「专注模式 / 免打扰」。这三处都会拦截提醒，而应用本身没有权限查询它们的状态。
+        </p>
+      </details>
+
+      <details>
+        <summary>为什么开源？</summary>
+        <p>
+          课表里包含你的课程、教室和作息，这类数据不该交给不透明的服务端。
+          代码公开，任何人都能验证它确实没有上传行为。仓库在
+          <a href="https://github.com/Flh-hub/bupt-schedule">GitHub</a>，欢迎提 issue。
+        </p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <div>北邮课程表 · 非官方项目，与北京邮电大学无关</div>
+    <div class="foot-links">
+      <a href="https://github.com/Flh-hub/bupt-schedule">源码</a>
+      <a href="https://github.com/Flh-hub/bupt-schedule/releases">版本发布</a>
+      <a href="https://github.com/Flh-hub/bupt-schedule/issues">问题反馈</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
