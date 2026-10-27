@@ -340,7 +340,7 @@
 
   .shot + .shot { margin-top: 84px; }
 
-  .shot.flip .shot-media { order: 2; }
+  .shot.flip .shot-media { order: -1; }
 
   .shot-body h3 {
     font-size: clamp(21px, 2.6vw, 26px);
@@ -389,6 +389,60 @@
     background: var(--bg-2);
     box-shadow: var(--shadow);
   }
+
+  /* 活动示意：棕色虚线 +「活」角标，与 App 里 .tt-block.is-event 的规则一致 */
+  .event-canvas {
+    display: grid;
+    place-items: center;
+    gap: 16px;
+    padding: 34px 24px;
+    background: var(--bg-2);
+  }
+
+  .ev-col {
+    width: 100%;
+    max-width: 320px;
+    display: grid;
+    gap: 9px;
+  }
+
+  .ev-slot {
+    position: relative;
+    border-radius: 10px;
+    padding: 11px 13px;
+    display: grid;
+    gap: 3px;
+  }
+
+  .ev-slot b { font-size: 14px; font-weight: 650; }
+
+  .ev-slot.is-course {
+    background: color-mix(in srgb, #4d8ef7 11%, var(--surface));
+    border-left: 3px solid #4d8ef7;
+  }
+
+  .ev-slot.is-event {
+    background: color-mix(in srgb, #b7791f 13%, var(--surface));
+    border-left: 3px dashed #b7791f;
+  }
+
+  .ev-meta { font-size: 12px; color: var(--muted); }
+
+  .ev-flag {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    background: #b7791f;
+    color: #fff;
+    font-size: 10.5px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 1.5;
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .ev-hint { font-size: 12.5px; color: var(--muted); }
 
   /* 胶囊示意：纯 CSS 画，文字与 ClassCard.timeChipText() 一致。
      用截图的话，文案一改图就过期了（上一版就是「还有5分钟」的老方案）。 */
@@ -729,6 +783,41 @@
       <div class="shot-media chip-canvas">
         <span class="chip-pill"><i class="chip-ico"></i>5分钟后上课</span>
         <span class="chip-note">锁屏与状态栏上的实时动态胶囊</span>
+      </div>
+    </div>
+
+    <div class="shot flip">
+      <div class="shot-body">
+        <h3>临时的安排，也能排进课表</h3>
+        <p>
+          组会、讲座、社团例会，按具体时间加进去，和课程一起提醒。
+          不用为了它去改整张课表。
+        </p>
+        <ul>
+          <li>按几点几分落位，不套节次 —— 19:20 就是 19:20</li>
+          <li>结束时间超过最后一节课，表格会自动往下延长</li>
+          <li>棕色虚线块加「活」角标，一眼和课程分开</li>
+          <li>到点照常提醒，和上课一样</li>
+        </ul>
+      </div>
+      <div class="shot-media event-canvas">
+        <div class="ev-col">
+          <div class="ev-slot is-course">
+            <b>基础综合英语</b>
+            <span class="ev-meta">教一-302 · 18:30–19:15</span>
+          </div>
+          <div class="ev-slot is-event">
+            <i class="ev-flag">活</i>
+            <b>组会</b>
+            <span class="ev-meta">教三-101 · 19:20–20:30</span>
+          </div>
+          <div class="ev-slot is-event">
+            <i class="ev-flag">活</i>
+            <b>社团例会</b>
+            <span class="ev-meta">学生活动中心 · 21:00–22:00</span>
+          </div>
+        </div>
+        <span class="ev-hint">虚线 + 「活」角标 = 自己加的安排</span>
       </div>
     </div>
   </div>
