@@ -563,6 +563,16 @@
 
   .dl-card .btn { width: 100%; justify-content: center; margin-top: auto; }
 
+  .dl-note {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .dl-note a { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
+
   .steps {
     margin: 18px 0 0;
     padding: 16px 0 0;
@@ -649,7 +659,7 @@
       不需要注册，没有服务器，所有数据只存在这台手机上。
     </p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="https://github.com/Flh-hub/bupt-schedule/releases/download/v1.11.3/bupt-schedule-1.11.3.apk">
+      <a class="btn btn-primary" href="dl/bupt-schedule.apk" download>
         下载 Android 版
         <small>418 KB</small>
       </a>
@@ -831,7 +841,11 @@
           <dt>大小</dt><dd>418 KB</dd>
           <dt>系统</dt><dd>Android 8.0 及以上</dd>
         </dl>
-        <a class="btn btn-primary" href="https://github.com/Flh-hub/bupt-schedule/releases/download/v1.11.3/bupt-schedule-1.11.3.apk">下载 APK</a>
+        <a class="btn btn-primary" href="dl/bupt-schedule.apk" download>下载 APK</a>
+        <p class="dl-note">
+          首次点击需等几秒；若中断请重试。
+          <a href="https://github.com/Flh-hub/bupt-schedule/releases">GitHub 备份</a>
+        </p>
         <ol class="steps">
           <li>下载后点开安装，按提示允许「安装未知应用」</li>
           <li>ColorOS 会弹「个人信息收集提醒」，属系统固定提示，本应用不联网收集</li>

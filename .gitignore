@@ -2,6 +2,8 @@
 android/build/
 android/dist/
 *.apk
+# 但官网主按钮直链的那一个必须入库：全新 clone 后部署，下载按钮不能 404
+!site/dl/*.apk
 *.idsig
 
 # 依赖
