@@ -350,10 +350,15 @@ test('导入页是单一登录跳转入口（G4″）', () => {
   assert.ok(/case 'goto-channel'/.test(mainSrc), '必须有 goto-channel 动作，回填到备用通道');
 });
 
-test('底部导航 4 个 tab，无账号页（G4‴）', () => {
+test('底部导航 5 个 tab（含作业），无账号页（G4‴）', () => {
   const html = fs.readFileSync('index.html', 'utf8');
   const routes = [...html.matchAll(/data-route="#\/([a-z]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(routes, ['timetable', 'import', 'reminder', 'settings'], '底部 tab 应只剩 4 个');
+  // 1.12.0 加了「作业」tab。顺序有意义：课表/作业是天天看的，导入/提醒/设置是配置类。
+  assert.deepEqual(
+    routes,
+    ['timetable', 'homework', 'import', 'reminder', 'settings'],
+    '底部 tab 应为 5 个，且「作业」紧跟课表'
+  );
   assert.ok(!html.includes('account'), 'index.html 不应再出现 account 路由');
   const mainSrc = fs.readFileSync('src/main.js', 'utf8');
   assert.ok(!/renderAccount|createSync|loadSdk/.test(mainSrc), 'main.js 不应再引用账号/云同步模块');

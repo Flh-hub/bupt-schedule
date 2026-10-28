@@ -424,6 +424,34 @@ export function grabRunning() {
  *   onEvent({type:'progress'|'error', id, step?, percent?, text?, code?, detail?})
  *   onResult(id, payload) — payload 已解码成对象
  */
+/**
+ * 作业抓取的事件桥。原生通过 `window.__buptHomeworkEvent(json)` 推事件：
+ *   { type:'progress', text } / { type:'result', json } / { type:'error', code }
+ *
+ * 和课表抓取分开是因为两者生命周期不同：课表抓完要进「变更确认」，
+ * 作业抓完直接落缓存，不需要审批流程。
+ */
+export function installHomeworkBridge(handlers = {}) {
+  if (!isNativeApp()) return false;
+  const onEvent = typeof handlers.onEvent === 'function' ? handlers.onEvent : null;
+  window.__buptHomeworkEvent = (raw) => {
+    let evt = null;
+    try {
+      evt = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } catch (err) {
+      return;
+    }
+    if (!evt || typeof evt !== 'object') return;
+    // 回调异常不能抛回原生，否则 WebView 会静默吞掉
+    try {
+      if (onEvent) onEvent(evt);
+    } catch (err) {
+      /* 忽略 */
+    }
+  };
+  return true;
+}
+
 export function installGrabBridge(handlers = {}) {
   if (!isNativeApp()) return false;
   const onEvent = typeof handlers.onEvent === 'function' ? handlers.onEvent : null;
@@ -548,6 +576,69 @@ export function batteryRestricted() {
   const snap = permissionSnapshot();
   if (!snap || typeof snap.bgRestricted !== 'boolean') return null;
   return snap.bgRestricted;
+}
+
+/* ---------------- 作业的凭证（与教务分开存，两边密码不一样） ---------------- */
+
+export function hwCredSave(account, password) {
+  const b = nativeBridge();
+  if (!b || typeof b.saveHomeworkCredentials !== 'function') return false;
+  try {
+    return !!b.saveHomeworkCredentials(String(account || ''), String(password || ''));
+  } catch (err) {
+    return false;
+  }
+}
+
+export function hwCredHas() {
+  const b = nativeBridge();
+  if (!b || typeof b.hasHomeworkCredentials !== 'function') return false;
+  try {
+    return !!b.hasHomeworkCredentials();
+  } catch (err) {
+    return false;
+  }
+}
+
+export function hwCredAccount() {
+  const b = nativeBridge();
+  if (!b || typeof b.homeworkAccount !== 'function') return '';
+  try {
+    return String(b.homeworkAccount() || '');
+  } catch (err) {
+    return '';
+  }
+}
+
+export function hwCredClear() {
+  const b = nativeBridge();
+  if (!b || typeof b.clearHomeworkCredentials !== 'function') return false;
+  try {
+    b.clearHomeworkCredentials();
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * 抓作业：让原生在隐藏 WebView 里登录云邮教学空间，把待办 + 详情取回来。
+ *
+ * 结果不从这里返回（要跑十几秒），而是走 `window.__buptHomeworkEvent(event)`：
+ *   { type:'progress'|'result'|'error', ... }
+ *
+ * @param {string} account 学号；空串表示用本机已保存的
+ * @param {string} password 密码；空串表示用本机已保存的
+ * @returns {boolean} 原生是否接手
+ */
+export function grabHomework(account, password) {
+  const b = nativeBridge();
+  if (!b || typeof b.grabHomework !== 'function') return false;
+  try {
+    return !!b.grabHomework(String(account || ''), String(password || ''));
+  } catch (err) {
+    return false;
+  }
 }
 
 /** 精确闹钟（Android 12+ 特殊权限）设置页。 */

@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
 
     /** 虚拟源：所有 APK 内资源都挂在这个域名下。 */
     static final String ORIGIN = "https://appassets.androidplatform.net";
-    static final String VERSION = "1.11.4";
+    static final String VERSION = "1.12.0";
 
     private static final int REQ_FILE = 1001;
     private static final int REQ_JWGL = 1002;
@@ -116,6 +116,8 @@ public class MainActivity extends Activity {
     private WebView web;
     /** 后台抓取用的 1×1 容器：AutoGrabber 把隐藏 WebView 塞进来跑学校页面。 */
     private FrameLayout grabHost;
+    /** 「一键获取作业」的后台引擎（与课表抓取共用那个 1×1 容器，同时只跑一个）。 */
+    private HomeworkGrabber homeworkGrabber;
     private AutoGrabber grabber;
     private GrabListener grabListener;
     private ValueCallback<Uri[]> fileCallback;
@@ -161,6 +163,7 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Bridge(), "BuptNative");
 
         grabber = new AutoGrabber(this, grabHost, grabListener = new GrabListener());
+        homeworkGrabber = new HomeworkGrabber(this, grabHost, new HomeworkListener());
 
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState);
@@ -229,6 +232,41 @@ public class MainActivity extends Activity {
             applySystemBars();
         } catch (Throwable ignored) {
             // 刷不到就算了，不影响功能
+        }
+    }
+
+    /** 作业抓取的三个回调 → 统一转成 `__buptHomeworkEvent`。 */
+    private class HomeworkListener implements HomeworkGrabber.Listener {
+        @Override
+        public void onProgress(String text) {
+            emitHomework("progress", text, null, null);
+        }
+
+        @Override
+        public void onResult(String json) {
+            emitHomework("result", null, json, null);
+        }
+
+        @Override
+        public void onError(String code, String detail) {
+            emitHomework("error", null, null, code);
+        }
+    }
+
+    /** 推一条作业事件给网页。字段用 JSON 拼，别手写字符串（转义会出错）。 */
+    private void emitHomework(String type, String text, String json, String code) {
+        if (web == null) return;
+        try {
+            JSONObject o = new JSONObject();
+            o.put("type", type);
+            if (text != null) o.put("text", text);
+            if (json != null) o.put("json", json);
+            if (code != null) o.put("code", code);
+            web.evaluateJavascript(
+                    "window.__buptHomeworkEvent&&window.__buptHomeworkEvent(" + o.toString() + ")",
+                    null);
+        } catch (Exception ignored) {
+            // 推不出去就算了，网页侧有超时兜底
         }
     }
 
@@ -1314,6 +1352,62 @@ public class MainActivity extends Activity {
 
         /** 保存学号密码（Keystore 加密后存本机，网页读不到明文）。 */
         @JavascriptInterface
+        /**
+         * 「一键获取作业」：登录云邮教学空间，把待办 + 详情抓回来。
+         *
+         * 结果不从这里同步返回（要跑十几秒），而是通过
+         * `window.__buptHomeworkEvent(...)` 推给网页。
+         */
+        public boolean grabHomework(final String account, final String password) {
+            // ★ JS 桥是在 JavaBridge 线程调进来的，碰 View 必须先切 UI 线程，
+            //   否则直接抛 "Calling View methods on another thread"（真机崩过）。
+            runOnUiThread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            if (grabber != null && grabber.isRunning()) {
+                                Toast.makeText(
+                                                MainActivity.this,
+                                                "课表还在抓，等它跑完",
+                                                Toast.LENGTH_SHORT)
+                                        .show();
+                                return;
+                            }
+                            if (homeworkGrabber == null) {
+                                homeworkGrabber =
+                                        new HomeworkGrabber(
+                                                MainActivity.this, grabHost, new HomeworkListener());
+                            }
+                            // 失败原因由 start() 自己 emitError，这里不用管返回值
+                            homeworkGrabber.start(account, password);
+                        }
+                    });
+            // 乐观返回 true：真正的失败会通过 __buptHomeworkEvent 推回来
+            return true;
+        }
+
+        /* ---- 作业的凭证单独一套：云邮和教务的密码不一样 ---- */
+
+        @JavascriptInterface
+        public boolean saveHomeworkCredentials(String account, String password) {
+            return Credentials.saveHomework(MainActivity.this, account, password);
+        }
+
+        @JavascriptInterface
+        public boolean hasHomeworkCredentials() {
+            return Credentials.hasHomework(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public String homeworkAccount() {
+            return Credentials.homeworkAccount(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void clearHomeworkCredentials() {
+            Credentials.clearHomework(MainActivity.this);
+        }
+
         public boolean saveCredentials(String account, String password) {
             return Credentials.save(MainActivity.this, account, password);
         }

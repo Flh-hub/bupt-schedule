@@ -226,6 +226,17 @@ export function createStore(options = {}) {
   }
 
   const handlers = {
+    /**
+     * 作业缓存。**只读快照**，不参与课表派生：
+     * 作业来自云邮教学空间，和 sessions/adjustments 没有关系，混进派生链只会让两边都变脆。
+     */
+    SET_HOMEWORK(payload) {
+      const hw = payload && payload.homework ? payload.homework : null;
+      state.homework = hw;
+      touchContent();
+      return { ok: true, errors: [] };
+    },
+
     SET_SEMESTER(payload) {
       const { semesterStartMonday, totalWeeks, hasOddEvenWeek } = payload || {};
       if (semesterStartMonday != null && semesterStartMonday !== '' && !isDateStr(semesterStartMonday)) {

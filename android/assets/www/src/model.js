@@ -427,7 +427,9 @@ export function emptyState() {
     sessions: [],
     adjustments: [],
     holidays: [],
-    importHistory: []
+    importHistory: [],
+    // 作业（云邮教学空间抓回来的只读缓存）：null = 还没抓过
+    homework: null
   };
 }
 

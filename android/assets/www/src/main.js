@@ -23,6 +23,7 @@ import {
   WEEKDAY_SHORT
 } from './model.js';
 import { currentWeekOffset, getReminders, resolveDay } from './calendar.js';
+import { normalizeDetail, normalizeList } from './homework.js';
 import { isSecureContextLike, replan, startScheduler } from './reminder.js';
 import {
   closePicker,
@@ -45,6 +46,7 @@ import { maybePromptMakeup, snoozeMakeupPrompt, openMakeupPrompt } from './ui/ma
 import * as TT from './ui/timetable.js';
 import * as IMP from './ui/import.js';
 import * as REM from './ui/reminderView.js';
+import * as HW from './ui/homework.js';
 import * as SET from './ui/settings.js';
 import { FEEDBACK_EMAIL } from './ui/settings.js';
 import * as NATIVE from './native.js';
@@ -94,7 +96,7 @@ function parseHash() {
   if (parts[0] === 'detail' && parts.length >= 3) {
     return { name: 'detail', sub: null, courseId: decodeURIComponent(parts[1]), date: parts[2] };
   }
-  const known = ['timetable', 'import', 'reminder', 'settings'];
+  const known = ['timetable', 'homework', 'import', 'reminder', 'settings'];
   // 二级页：#/settings/periods、#/reminder/courses —— 用 hash 段表示，
   // 这样安卓返回键直接走 history，不用自己维护"返回上一级"的栈
   if (known.includes(parts[0])) {
@@ -123,6 +125,22 @@ function syncTabs() {
     const active = tab.dataset.route === `#/${currentRoute.name}`;
     tab.classList.toggle('is-active', active);
   }
+}
+
+/**
+ * 「作业」上的未完成数角标。
+ *
+ * 数量取的是待办列表长度，不是接口给的 undoneNum —— 后者是学校口径的"总未完成"，
+ * 可能包含我们没抓下来的条目，显示出来会和列表对不上，用户会怀疑漏了作业。
+ * 0 条时把元素 hidden 掉，不留空位。
+ */
+function syncHomeworkBadge(state) {
+  const el = document.querySelector('[data-badge="homework"]');
+  if (!el) return;
+  const items = state && state.homework && Array.isArray(state.homework.items) ? state.homework.items : [];
+  const n = items.length;
+  el.textContent = n > 99 ? '99+' : String(n);
+  el.hidden = n === 0;
 }
 
 /* ---------------------------------------------------------------- 渲染 */
@@ -230,6 +248,7 @@ function render() {
   currentRoute = parseHash();
   uiState.sub = currentRoute.sub || null; // 各页面据此渲染二级页
   syncTabs();
+  syncHomeworkBadge(state);
 
   const routeKey = `${currentRoute.name}|${currentRoute.sub || ''}|${currentRoute.courseId || ''}|${
     currentRoute.date || ''
@@ -247,6 +266,8 @@ function render() {
 
   if (currentRoute.name === 'detail') {
     TT.renderDetail(view, state, currentRoute.courseId, currentRoute.date);
+  } else if (currentRoute.name === 'homework') {
+    HW.renderHomework(view, state, uiState);
   } else if (currentRoute.name === 'import') {
     IMP.renderImport(view, state, uiState);
   } else if (currentRoute.name === 'reminder') {
@@ -1523,6 +1544,38 @@ document.addEventListener('click', async (event) => {
     case 'onboard-open':
       showOnboard();
       return;
+    case 'homework-fetch': {
+      const accEl = document.getElementById('hw-account');
+      const pwdEl = document.getElementById('hw-password');
+      const account = String((accEl && accEl.value) || '').trim();
+      const password = String((pwdEl && pwdEl.value) || '');
+      if (!account || !password) {
+        snackbar('学号和密码都要填', { danger: true });
+        return;
+      }
+      NATIVE.hwCredSave(account, password);
+      startHomeworkGrab(account, password);
+      return;
+    }
+
+    case 'homework-change-account':
+      NATIVE.hwCredClear();
+      store.dispatch({ type: 'SET_HOMEWORK', payload: { homework: null } });
+      snackbar('已清除作业账号，请重新输入');
+      scheduleRender();
+      return;
+
+    case 'homework-refresh':
+      // 空串 = 用本机已保存的那份
+      startHomeworkGrab('', '');
+      return;
+
+    case 'homework-clear':
+      store.dispatch({ type: 'SET_HOMEWORK', payload: { homework: null } });
+      snackbar('已清除本地缓存，点「刷新」可重新获取');
+      scheduleRender();
+      return;
+
     case 'copy-feedback':
       // 关于页的「复制」按钮：邮箱只在 settings.js 的 FEEDBACK_EMAIL 里定义一次
       copyText(FEEDBACK_EMAIL, `邮箱已复制：${FEEDBACK_EMAIL}`);
@@ -1943,6 +1996,80 @@ let grabTicker = 0;
  * 这期间用户已经在盯着界面了；没有一个自己的 id，一条"上一次抓取"的迟到事件
  * 就能把这次的状态搞乱（进度条从 60% 跳回 10%）。
  */
+/**
+ * 抓作业。和课表抓取的区别：作业**不需要审批**，抓回来直接落缓存。
+ *
+ * 联网读学校账号之前同样要拿到明确同意（和课表抓取同一条红线）。
+ */
+/** 作业抓取的看门狗：原生那边如果一直不回声（WebView 卡住），界面不能永远转。 */
+let hwWatchdog = 0;
+
+function startHomeworkGrab(account, password) {
+  if (!privacyAccepted()) {
+    maybeAskPrivacy({ force: true, onAccept: () => startHomeworkGrab(account, password) });
+    return;
+  }
+  uiState.hwBusy = true;
+  scheduleRender();
+  window.clearTimeout(hwWatchdog);
+  hwWatchdog = window.setTimeout(() => {
+    if (!uiState.hwBusy) return;
+    uiState.hwBusy = false;
+    snackbar('等太久了，可能网络不通，稍后再试', { danger: true, duration: 4200 });
+    scheduleRender();
+  }, 100000);
+  if (!NATIVE.grabHomework(account, password)) {
+    uiState.hwBusy = false;
+    snackbar('这个版本还抓不了作业，请更新 App', { danger: true, duration: 3600 });
+    scheduleRender();
+  }
+}
+
+/** 原生推来的作业抓取事件。 */
+function onHomeworkEvent(evt) {
+  const type = String((evt && evt.type) || '');
+  if (type === 'progress') return; // 进度不落状态，界面上靠"正在读取…"就够了
+
+  window.clearTimeout(hwWatchdog);
+
+  if (type === 'error') {
+    uiState.hwBusy = false;
+    const text = HW.homeworkErrorText(String((evt && evt.code) || ''));
+    if (text) snackbar(text, { danger: true, duration: 4600 });
+    scheduleRender();
+    return;
+  }
+
+  if (type !== 'result') return;
+
+  uiState.hwBusy = false;
+  try {
+    const payload = typeof evt.json === 'string' ? JSON.parse(evt.json) : evt.json || {};
+    const list = normalizeList(payload.list);
+    const details = {};
+    const rawDetails = payload.details && typeof payload.details === 'object' ? payload.details : {};
+    Object.keys(rawDetails).forEach((id) => {
+      details[id] = normalizeDetail(rawDetails[id]);
+    });
+    store.dispatch({
+      type: 'SET_HOMEWORK',
+      payload: {
+        homework: {
+          at: Date.now(),
+          total: list.total,
+          undone: list.undone,
+          items: list.items,
+          details
+        }
+      }
+    });
+    snackbar(list.items.length ? `已更新：${list.items.length} 条未完成` : '没有未完成的作业');
+  } catch (err) {
+    snackbar('作业数据解析失败，稍后再试', { danger: true });
+  }
+  scheduleRender();
+}
+
 function startGrabFlow(account, password) {
   // 联网读教务账号之前必须拿到明确同意：这是「个人信息收集」那条声明唯一的落点。
   // 暂缓期也照样问（force），否则就变成"点了暂不还能静默联网"。
@@ -2333,6 +2460,7 @@ async function boot() {
   NATIVE.installNativeBridge(applyNativeCapture);
   // 后台自动抓取的三个出口：进度/失败走 event，结果走 result（base64）
   NATIVE.installGrabBridge({ onEvent: onGrabEvent, onResult: onGrabResult });
+  NATIVE.installHomeworkBridge({ onEvent: onHomeworkEvent });
   // 「更新课表」的两条回传通道（原生侧调用；浏览器里没人调，挂了也无副作用）
   window.__buptUpdatePayload = (b64) => handleUpdatePayload(b64);
   window.__buptAutoCaptureError = (code) => failUpdate(code);

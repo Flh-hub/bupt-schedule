@@ -1240,6 +1240,7 @@ body.is-dragging-block {
 }
 
 .tab {
+  position: relative;
   height: 58px;
   display: flex;
   flex-direction: column;
@@ -1249,6 +1250,25 @@ body.is-dragging-block {
   font-size: 11px;
   color: var(--muted);
   transition: color var(--dur-1) var(--ease-out);
+}
+
+/* 未完成作业数：贴在「作业」图标右上角。0 条时元素 hidden，不占位 */
+.tab-badge {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  margin-left: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--bg);
 }
 
 .tab svg {
@@ -3886,3 +3906,176 @@ textarea.code {
     background: #2c3238;
   }
 }
+
+/* ==========================================================================
+   作业 Tab（1.12.0）
+   —— 列表项本身就是链接（整行可点），所以用 <a> 而不是 div + 事件委托。
+   —— 紧急/过期的区分只靠**左边框颜色 + 剩余时间文字颜色**，不改背景：
+      改背景会让整页色块太吵，而待办列表要的是"扫一眼看出哪个先到期"。
+   ========================================================================== */
+.hw-toolbar {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin: 0 2px 10px;
+}
+
+.hw-hint {
+  margin: 0 4px 10px;
+  font-size: 12.5px;
+  color: var(--danger-ink);
+}
+
+.hw-busy {
+  margin: 0 4px 10px;
+  font-size: 12.5px;
+  color: var(--brand);
+}
+
+.hw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hw-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+
+.hw-row:active {
+  transform: scale(0.995);
+  background: var(--surface-2);
+}
+
+.hw-row.is-urgent {
+  border-left-color: var(--danger);
+}
+
+.hw-row.is-overdue {
+  border-left-color: var(--muted);
+  opacity: 0.72;
+}
+
+.hw-row-main {
+  min-width: 0;
+  flex: 1;
+}
+
+/* 课程标签：一眼看出这是哪门课布置的作业。
+   单行省略，宽度撑满后由 title 属性兜住全文。 */
+.hw-course {
+  display: inline-block;
+  max-width: 100%;
+  margin-bottom: 4px;
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.hw-title {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  /* 作业名可能很长（「期末考核——必须提交的作业，不交总成绩会不及格」），
+     最多两行，超出省略 —— 这里可以省略，因为点进去就有全文。 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.35;
+}
+
+.hw-meta {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hw-left {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.hw-row.is-urgent .hw-left {
+  color: var(--danger-ink);
+}
+
+.hw-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hw-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hw-field > span {
+  width: 44px;
+  flex: none;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.hw-field .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.hw-detail-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.hw-detail-meta {
+  margin: 0 0 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 正文：学校编辑器产出的 HTML，标签已经过白名单。
+   这里只管排版，不允许它撑破卡片宽度。 */
+.hw-body {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.hw-body p { margin: 0 0 10px; }
+.hw-body p:last-child { margin-bottom: 0; }
+.hw-body strong, .hw-body b { color: var(--text); }
+.hw-body ul, .hw-body ol { padding-left: 20px; margin: 0 0 10px; }
+.hw-body img { max-width: 100%; height: auto; border-radius: var(--radius-xs); }
+.hw-body a { color: var(--brand); text-decoration: underline; }
+.hw-body table { width: 100%; border-collapse: collapse; }
+.hw-body td, .hw-body th { border: 1px solid var(--line); padding: 4px 6px; }

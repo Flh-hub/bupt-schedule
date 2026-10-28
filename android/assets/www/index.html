@@ -7,7 +7,7 @@
     <meta name="description" content="北邮课程表 · 离线可用，节假日自动静默，支持导出系统日历提醒" />
     <meta name="theme-color" content="#013A89" />
     <!-- 版本号唯一来源：设置 › 关于 从这里读。发版时只改这一处（构建脚本另有 VERSION_* 常量，两处要一起动） -->
-    <meta name="app-version" content="1.11.4" />
+    <meta name="app-version" content="1.12.0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="北邮课表" />
@@ -31,6 +31,14 @@
             <path d="M3 9.5h18M8 3v3M16 3v3M9 14h2M13 14h2" />
           </svg>
           <span>课表</span>
+        </a>
+        <a class="tab" href="#/homework" data-route="#/homework" data-action="nav" aria-label="作业">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4.5h7l4 4V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2Z" />
+            <path d="M13.5 4.5V9h4.5M8.5 13h6M8.5 16.5h4" />
+          </svg>
+          <span>作业</span>
+          <b class="tab-badge" data-badge="homework" hidden></b>
         </a>
         <a class="tab" href="#/import" data-route="#/import" data-action="nav" aria-label="导入">
           <svg viewBox="0 0 24 24" aria-hidden="true">
