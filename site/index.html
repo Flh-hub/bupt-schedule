@@ -917,5 +917,27 @@
   </div>
 </footer>
 
+<script>
+  /*
+   * 下载链接必须自己带上 sharecode。
+   *
+   * 这个托管网关的鉴权是「?sharecode=xxx 换一个 __wb_rsc Cookie」。
+   * 页面本身和图片靠 Cookie 都能过，但浏览器的下载管理器往往用独立的网络栈，
+   * Cookie 不一定带得上 → 请求裸路径 dl/bupt-schedule.apk → **403**，
+   * 手机上表现为「0.00 B / 连接中」永远不动。
+   * 所以这里把当前页面的 sharecode 拼到所有 apk 链接上，不依赖 Cookie。
+   */
+  (function () {
+    var code = new URLSearchParams(location.search).get('sharecode');
+    if (!code) return;
+    var links = document.querySelectorAll('a[href$=".apk"]');
+    for (var i = 0; i < links.length; i++) {
+      var u = new URL(links[i].getAttribute('href'), location.href);
+      u.searchParams.set('sharecode', code);
+      links[i].href = u.href;
+    }
+  })();
+</script>
+
 </body>
 </html>
