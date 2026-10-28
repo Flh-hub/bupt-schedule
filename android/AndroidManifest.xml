@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.bupt.schedule"
-    android:versionCode="127"
-    android:versionName="1.12.7">
+    android:versionCode="129"
+    android:versionName="1.12.9">
 
     <!-- minSdk 24：ColorOS 上能覆盖到 Android 7 以后的机型；targetSdk 33：
          不触发 Android 15 的强制 edge-to-edge，刘海/手势条由系统让位给 WebView，

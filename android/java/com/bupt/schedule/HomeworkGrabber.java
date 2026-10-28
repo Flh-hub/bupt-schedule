@@ -421,32 +421,6 @@ public final class HomeworkGrabber {
                         + "if(dj&&dj.data)out.details[items[i].activityId]=dj.data;"
                         + "}catch(e){}"
                         + "}"
-                        // 课程 → 作业：列表接口（undone）不给课程名（siteId 恒为 -1），
-                        // 但「我的课程」和「课程下的作业」两个接口是齐的：
-                        //   ① GET  /ykt-site/site/list?userId=…                       → 课程（siteName）
-                        //   ② POST /ykt-site/work/student/list?siteId=…&pageNum&pageSize
-                        //      注意：参数必须放 query，放 body 会被忽略（实测回 size:10 空列表）
-                        // 这里扫一遍课程，建 activityId → 课程名 的映射，回传给前端补标签。
-                        + "out.courseMap={};"
-                        + "try{"
-                        + "var sit=await (await fetch(B+'/ykt-site/site/list?userId='+uid,{headers:H})).json();"
-                        + "var sites=(sit&&sit.data&&sit.data.records)||[];"
-                        + "var PH={'Authorization':H['Authorization'],'Tenant-Id':H['Tenant-Id'],"
-                        + "'Blade-Auth':H['Blade-Auth'],'identity':H['identity'],'Content-Type':'application/json'};"
-                        + "var lim=Math.min(sites.length,14);"
-                        + "for(var si=0;si<lim;si++){"
-                        + "try{"
-                        + "var uq=B+'/ykt-site/work/student/list?siteId='+sites[si].id+'&pageNum=1&pageSize=50';"
-                        + "var rq=await fetch(uq,{method:'POST',headers:PH,body:'{}'});"
-                        + "var qj=await rq.json();"
-                        + "var rows=(qj&&qj.data&&qj.data.records)||[];"
-                        + "for(var ri=0;ri<rows.length;ri++){"
-                        + "var aid=String(rows[ri].id==null?'':rows[ri].id);"
-                        + "if(aid&&!out.courseMap[aid])out.courseMap[aid]=String(sites[si].siteName||'');"
-                        + "}"
-                        + "}catch(e){}"
-                        + "}"
-                        + "}catch(e){}"
                         + "BuptHomework.done(JSON.stringify(out));"
                         + "}catch(e){BuptHomework.error('unknown');}"
                         + "})();";
