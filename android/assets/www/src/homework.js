@@ -267,7 +267,9 @@ export function normalizeDetail(data) {
     id: String(d.id == null ? '' : d.id),
     title: String(d.assignmentTitle == null ? '' : d.assignmentTitle).trim(),
     contentHtml: sanitizeHtml(d.assignmentContent),
-    courseName: String(d.className == null ? '' : d.className).trim(),
+    // ★ className 实测是「[2026219101-2026219103]班,2026299101班」这种**班级范围**，
+    //   不是课程名。以前把它塞进 courseName，界面会冒出一长串班级号。
+    classes: String(d.className == null ? '' : d.className).trim(),
     begin: String(d.assignmentBeginTime == null ? '' : d.assignmentBeginTime).trim(),
     due,
     dueMs: parseDue(due),

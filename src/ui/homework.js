@@ -38,8 +38,11 @@ function itemRow(item, now, detail) {
   if (detail && detail.fullMark) meta.push(`满分 ${detail.fullMark}`);
 
   // 课程名单独一行放在标题上方：学生看待办第一个要判断的就是"这是哪门课的"
-  const course = item.courseName
-    ? `<div class="hw-course" title="${escapeHtml(item.courseName)}">${escapeHtml(item.courseName)}</div>`
+  // 只认列表接口的 siteName。实测该字段可能为空（siteId=-1 的校级作业就是），
+  // 空的就不显示标签 —— 不拿班级范围或作业名去猜课程。
+  const courseName = item.courseName || '';
+  const course = courseName
+    ? `<div class="hw-course" title="${escapeHtml(courseName)}">${escapeHtml(courseName)}</div>`
     : '';
 
   return `<a class="hw-row ${tone}" href="#/homework/${encodeURIComponent(item.id)}"
