@@ -43,8 +43,8 @@ const ZIPALIGN = path.join(BT, 'zipalign.exe');
 const D8_JAR = path.join(BT, 'lib', 'd8.jar');
 const APKSIGNER_JAR = path.join(BT, 'lib', 'apksigner.jar');
 
-const VERSION_NAME = '1.12.0';
-const VERSION_CODE = '120';
+const VERSION_NAME = '1.12.1';
+const VERSION_CODE = '121';
 const MIN_SDK = '24';
 const TARGET_SDK = '33';
 

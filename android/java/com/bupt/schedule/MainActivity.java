@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
 
     /** 虚拟源：所有 APK 内资源都挂在这个域名下。 */
     static final String ORIGIN = "https://appassets.androidplatform.net";
-    static final String VERSION = "1.12.0";
+    static final String VERSION = "1.12.1";
 
     private static final int REQ_FILE = 1001;
     private static final int REQ_JWGL = 1002;
