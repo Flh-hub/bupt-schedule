@@ -225,6 +225,28 @@ export function buildNativeAlarms(points, now = Date.now(), horizonDays = 7) {
     const id = raw.length > 80 ? raw.slice(0, 80) : raw;
     if (seen.has(id)) continue;
     seen.add(id);
+
+    // ---- 作业截止提醒：走普通通知，不是课程胶囊 ----
+    // 剩下的时间不在这里算死（排程时算的到点必然不准），只把 dueEpoch 带过去，
+    // 由原生在**发通知那一刻**算「还剩 1 天」。
+    if (p && p.kind === 'homework') {
+      const dueEpoch = Math.round(Number(p.dueMs) || 0);
+      if (!Number.isFinite(dueEpoch) || dueEpoch <= 0) continue; // 没截止就别排
+      out.push({
+        id,
+        at: Math.round(at),
+        kind: 'homework',
+        title: String(p.title || '作业'),
+        course: String(p.courseName || ''),
+        dueEpoch,
+        hwId: String(p.hwId || ''),
+        startEpoch: 0,
+        // 老壳不认 kind：至少让它当普通通知弹出来，内容是课程名 + 截止时刻
+        body: String(p.courseName || p.dueText || '作业即将截止')
+      });
+      continue;
+    }
+
     const periods = String((p && p.periodText) || '');
     const advance = Number(p && p.advanceMinutes);
     const startEpoch = Number.isFinite(advance) ? Math.round(at + advance * 60000) : 0;

@@ -24,6 +24,7 @@ import {
 } from './model.js';
 import { currentWeekOffset, getReminders, resolveDay } from './calendar.js';
 import { normalizeDetail, normalizeList } from './homework.js';
+import { getHomeworkReminders } from './homeworkReminder.js';
 import { isSecureContextLike, replan, startScheduler } from './reminder.js';
 import {
   closePicker,
@@ -1622,6 +1623,16 @@ document.addEventListener('click', async (event) => {
         payload: { enabled: state().settings.reminder.enabled === false }
       });
       return;
+    case 'homework-reminder-enabled': {
+      const hwCfg = state().settings.homeworkReminder || {};
+      store.dispatch({
+        type: 'SET_HOMEWORK_REMINDER',
+        payload: { enabled: hwCfg.enabled === false }
+      });
+      // store.subscribe 已经把重排带上，这里只补一句反馈
+      snackbar(hwCfg.enabled === false ? '已开启作业截止提醒' : '已关闭作业截止提醒');
+      return;
+    }
     case 'reminder-sound':
       store.dispatch({
         type: 'SET_REMINDER_DEFAULTS',
@@ -2344,7 +2355,13 @@ let widgetSyncTimer = 0;
  *
  * 为什么不能只靠页面定时器：App 一切后台或被清理，页面里的 setTimeout 就没了；
  * 原生闹钟由系统守护，锁屏、杀进程都能响——这才是 ColorOS 上"提醒真的会到"的办法。
+ *
+ * 作业截止提醒走**同一条通道**，但窗口不一样：课程是天天有的，7 天滚动足够；
+ * 作业可能三周后才截止，窗口太短就永远排不上。所以作业单独放到 90 天，
+ * 整批的 horizonDays 也跟着放大（课程点本身已被 from/to 限制在 7 天内，不受影响）。
  */
+const HW_HORIZON_DAYS = 90;
+
 function syncNativeAlarms() {
   if (!NATIVE.notifySupport()) return 0;
   const state = store.getState();
@@ -2357,7 +2374,12 @@ function syncNativeAlarms() {
   } catch (err) {
     points = [];
   }
-  return NATIVE.scheduleReminders(points, { now, horizonDays: 7 });
+  try {
+    points = points.concat(getHomeworkReminders(state, now));
+  } catch (err) {
+    // 作业数据坏了不能让课程提醒一起失效
+  }
+  return NATIVE.scheduleReminders(points, { now, horizonDays: HW_HORIZON_DAYS });
 }
 
 /** 数据/设置一变就重排，但 800ms 内多次变更只排一次（开关连点会连发 dispatch）。 */

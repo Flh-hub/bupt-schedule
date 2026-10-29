@@ -51,6 +51,21 @@ public class ReminderReceiver extends BroadcastReceiver {
             return;
         }
 
+        // ★ 作业截止提醒：普通通知，发完就结束。
+        //   不进课程那套「胶囊 + 收尾闹钟 + 刷新服务」——作业没有"开始/结束"这一刻，
+        //   挂前台服务只会白耗电，而且那张卡用户是可以直接划掉的。
+        if ("homework".equals(intent.getStringExtra("kind"))) {
+            int hwRc = intent.getIntExtra("rc", 0);
+            HomeworkCard.notify(
+                    context,
+                    intent.getStringExtra("title"),
+                    intent.getStringExtra("course"),
+                    intent.getLongExtra("dueEpoch", 0L),
+                    intent.getStringExtra("hwId"),
+                    hwRc);
+            return;
+        }
+
         String title = intent.getStringExtra("title");
         String periods = intent.getStringExtra("periods");
         long startEpoch = intent.getLongExtra("startEpoch", 0L);

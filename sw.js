@@ -8,7 +8,7 @@
  *   3. notificationclick 回跳 / push 预留
  */
 
-const CACHE = 'bupt-v92';
+const CACHE = 'bupt-v93';
 
 /** 预缓存清单：应用壳全部本地文件（云端 SDK 走 CDN，不在壳里）。 */
 const PRECACHE = [
@@ -20,6 +20,7 @@ const PRECACHE = [
   './assets/icons/icon-512.png',
   './src/main.js',
   './src/homework.js',
+  './src/homeworkReminder.js',
   './src/model.js',
   './src/holidays.js',
   './src/semesters.js',

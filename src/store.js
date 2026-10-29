@@ -14,6 +14,7 @@ import {
   SCHEMA_VERSION,
   STORAGE_KEY,
   ADJUSTMENT_TYPES,
+  defaultHomeworkReminderSettings,
   defaultReminderSettings,
   defaultSettings,
   emptyState,
@@ -128,6 +129,11 @@ export function createStore(options = {}) {
     merged.settings.reminder = {
       ...defaultReminderSettings(),
       ...(raw.settings && raw.settings.reminder ? raw.settings.reminder : {})
+    };
+    // ★ 单独补一次：老备份里没有 homeworkReminder，缺了它作业提醒会整个失效
+    merged.settings.homeworkReminder = {
+      ...defaultHomeworkReminderSettings(),
+      ...(raw.settings && raw.settings.homeworkReminder ? raw.settings.homeworkReminder : {})
     };
     if (!Array.isArray(merged.settings.periods) || !merged.settings.periods.length) {
       merged.settings.periods = DEFAULT_PERIODS.map((p) => ({ ...p }));
@@ -346,6 +352,21 @@ export function createStore(options = {}) {
       if (enabled != null) state.settings.reminder.enabled = !!enabled;
       if (sound != null) state.settings.reminder.sound = !!sound;
       if (vibrate != null) state.settings.reminder.vibrate = !!vibrate;
+      return { ok: true, errors: [] };
+    },
+
+    /**
+     * 作业截止提醒开关。
+     *
+     * 与课程提醒分开：两者的触发时机、打扰程度完全不同，
+     * 关掉上课提醒的人往往还想知道作业要交了（反之亦然）。
+     */
+    SET_HOMEWORK_REMINDER(payload) {
+      const { enabled } = payload || {};
+      if (!state.settings.homeworkReminder) {
+        state.settings.homeworkReminder = defaultHomeworkReminderSettings();
+      }
+      if (enabled != null) state.settings.homeworkReminder.enabled = !!enabled;
       return { ok: true, errors: [] };
     },
 
@@ -821,6 +842,10 @@ export function createStore(options = {}) {
       next.settings.reminder = {
         ...defaultReminderSettings(),
         ...((data.settings && data.settings.reminder) || {})
+      };
+      next.settings.homeworkReminder = {
+        ...defaultHomeworkReminderSettings(),
+        ...((data.settings && data.settings.homeworkReminder) || {})
       };
       if (!Array.isArray(next.settings.periods) || !next.settings.periods.length) {
         next.settings.periods = DEFAULT_PERIODS.map((p) => ({ ...p }));

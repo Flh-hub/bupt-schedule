@@ -135,11 +135,20 @@ final class ReminderScheduler {
             intent.setAction(ACTION_FIRE);
             // ★ 走 str()：org.json 的 optString 遇到 JSON null 会返回字符串 "null"，
             //   兜底值只在键不存在时生效。一旦漏掉，通知栏里就会出现「null」。
+            // ★ kind 区分两类提醒：课程走胶囊（ClassCard），作业走普通通知（HomeworkCard）。
+            //   老壳不认这个字段，一律当课程处理 —— 作业点也带 startEpoch=0，
+            //   所以在老壳里会退化成一张普通可划掉的通知，不会崩。
+            String kind = str(item, "kind");
             String title = str(item, "title");
-            intent.putExtra("title", title.length() == 0 ? "即将上课" : title);
+            if (title.length() == 0) title = "homework".equals(kind) ? "作业" : "即将上课";
+            intent.putExtra("kind", kind);
+            intent.putExtra("title", title);
             intent.putExtra("body", str(item, "body"));
             intent.putExtra("periods", str(item, "periods"));
             intent.putExtra("startEpoch", item.optLong("startEpoch", 0L));
+            intent.putExtra("dueEpoch", item.optLong("dueEpoch", 0L));
+            intent.putExtra("course", str(item, "course"));
+            intent.putExtra("hwId", str(item, "hwId"));
             intent.putExtra("id", id);
             intent.putExtra("rc", requestCode);
 

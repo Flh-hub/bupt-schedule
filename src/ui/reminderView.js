@@ -22,6 +22,7 @@ import {
 // 兼容既有调用方与测试：规范化逻辑本身在 model.js（课表页也要用同一份）
 export { normalizeCourseName };
 import { getReminders } from '../calendar.js';
+import { formatDue, getHomeworkReminders } from '../homeworkReminder.js';
 import { permissionState, requestPermission } from '../reminder.js';
 import * as NATIVE from '../native.js';
 import { courseAvatar, entryRow, subTopbar } from './components.js';
@@ -286,6 +287,54 @@ function nextReminderCard(plan, now) {
 }
 
 /** 主渲染。 */
+/**
+ * 作业截止提醒卡片。
+ *
+ * 说明必须写清「什么时候会响」——用户看不见闹钟，只能靠这行字判断要不要开。
+ * 也把「没有截止时间的不提醒」讲明白，否则会以为是漏了。
+ */
+function homeworkReminderCard(state, now) {
+  const cfg = (state.settings && state.settings.homeworkReminder) || {};
+  const on = cfg.enabled !== false;
+  const hour = Number.isInteger(Number(cfg.hour)) ? Number(cfg.hour) : 20;
+  let next = null;
+  try {
+    next = getHomeworkReminders(state, now)[0] || null;
+  } catch (err) {
+    next = null;
+  }
+  const count = Array.isArray(state.homework && state.homework.items)
+    ? state.homework.items.length
+    : 0;
+
+  let sub = `截止日前一天 ${hour}:00 提醒一次`;
+  if (on && next) {
+    const remain = next.courseName ? `${next.courseName} · ${next.title}` : next.title;
+    sub = `下次 ${formatDue(next.triggerAt)} · ${remain}`;
+  } else if (count === 0) {
+    sub = '还没有作业数据，抓取一次后生效';
+  } else if (!next) {
+    sub = '当前没有需要提醒的作业（无截止时间或已过期）';
+  }
+
+  return `
+    <div class="section-label">作业截止提醒</div>
+    <div class="card">
+      <div class="list-row">
+        <div class="grow">
+          <div class="lr-title">作业要交了，提前一天说一声</div>
+          <div class="lr-sub">${escapeHtml(sub)}</div>
+        </div>
+        ${toggleSwitch(on, 'homework-reminder-enabled', '作业截止提醒')}
+      </div>
+      <div class="list-row">
+        <div class="grow">
+          <div class="lr-sub">没有截止时间的作业不会提醒；已截止的不再打扰。</div>
+        </div>
+      </div>
+    </div>`;
+}
+
 export function renderReminder(container, state, uiState) {
   const now = Date.now();
   const sub = uiState && uiState.sub ? uiState.sub : null;
@@ -409,6 +458,8 @@ export function renderReminder(container, state, uiState) {
           ${toggleSwitch(reminder.vibrate !== false, 'reminder-vibrate', '震动')}
         </div>
       </div>
+
+      ${homeworkReminderCard(state, now)}
 
       <div class="section-label">默认提前量 ${customAdvance}</div>
       <div class="card">

@@ -397,6 +397,21 @@ export function defaultReminderSettings() {
   };
 }
 
+/**
+ * 默认作业截止提醒设置。
+ *
+ * 与课程提醒**分开**：两者的渠道、紧迫感、可关掉的理由都不一样。
+ * 关掉上课提醒的人，往往还想知道作业要交了。
+ */
+export function defaultHomeworkReminderSettings() {
+  return {
+    enabled: true,
+    // 截止日前一天的几点提醒。20:00 是刻意选的：教务的截止时间九成是 23:59，
+    // 按"截止 − 24 小时"会变成前一天半夜响铃。
+    hour: 20
+  };
+}
+
 /** 默认 Settings（单例）。 */
 export function defaultSettings() {
   return {
@@ -411,6 +426,7 @@ export function defaultSettings() {
     lastBackupAt: null,
     lastContentChangeAt: null,
     reminder: defaultReminderSettings(),
+    homeworkReminder: defaultHomeworkReminderSettings(),
     periods: DEFAULT_PERIODS.map((p) => ({ ...p }))
   };
 }

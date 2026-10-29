@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
 
     /** 虚拟源：所有 APK 内资源都挂在这个域名下。 */
     static final String ORIGIN = "https://appassets.androidplatform.net";
-    static final String VERSION = "1.13.4";
+    static final String VERSION = "1.13.5";
 
     private static final int REQ_FILE = 1001;
     private static final int REQ_JWGL = 1002;
@@ -123,6 +123,17 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> fileCallback;
     private long lastBackPressedAt = 0L;
 
+    /** 通知点击要落到的页面 hash（如 `#/homework/2110577090054602754`）。 */
+    static final String EXTRA_NAV = "nav";
+
+    /**
+     * 待执行的跳转。
+     *
+     * 冷启动时 onCreate 拿到 extra，但那一刻页面还没加载完，evaluateJavascript 会落空 ——
+     * 所以先存着，等 Client.onPageFinished 再执行。
+     */
+    private String pendingNav = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -171,10 +182,50 @@ public class MainActivity extends Activity {
             web.loadUrl(ORIGIN + "/index.html");
         }
 
+        // ★ 通知点进来的开局跳转。放在 loadUrl 之后存起来，由 onPageFinished 执行 ——
+        //   此刻页面还是空白，evaluateJavascript 必然落空。
+        Intent boot = getIntent();
+        if (boot != null) {
+            String nav = boot.getStringExtra(EXTRA_NAV);
+            if (nav != null && nav.length() > 1) pendingNav = nav;
+        }
+
         // 后台权限询问的时机交给页面决定（见 Bridge.askBackground）：
         // 这里以前是 postDelayed 1.2 秒自己弹，加了隐私说明之后那个原生框会正好
         // 压在第一屏的隐私弹层上，真机上就是两层对话框叠着，点哪个都不对。
         // ★ 只能是"首次启动"而不是"安装时"：安装由系统进程完成，应用代码还没被执行。
+    }
+
+    /**
+     * 执行一条页面内跳转（通知点击的落地页）。
+     *
+     * 只改 hash：主页面已经加载好了，走路由比重新 loadUrl 快，也不会丢掉内存里的状态。
+     */
+    private void applyNav(String nav) {
+        if (web == null) {
+            pendingNav = nav;
+            return;
+        }
+        String js =
+                "(function(){var h="
+                        + JSONObject.quote(nav)
+                        + ";if(location.hash!==h)location.hash=h;})()";
+        try {
+            web.evaluateJavascript(js, null);
+        } catch (Exception ignored) {
+            // 页面正在重建时可能抛，直接把跳转丢掉 —— 用户还在首页，不会卡住
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent == null) return;
+        setIntent(intent);
+        String nav = intent.getStringExtra(EXTRA_NAV);
+        if (nav == null || nav.length() < 2) return;
+        // launchMode=singleTask：App 已在后台时点通知走这里，页面是活的，直接跳
+        applyNav(nav);
     }
 
     /** 上一次看到的深浅色状态，用于判断是否真的切换了（见 onConfigurationChanged）。 */
@@ -864,6 +915,17 @@ public class MainActivity extends Activity {
     /* ------------------------------------------------------------ WebView 客户端 */
 
     private class Client extends WebViewClient {
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            super.onPageFinished(view, url);
+            // 冷启动时从通知点进来的跳转，等到这一该才有人接得住
+            if (pendingNav != null) {
+                String nav = pendingNav;
+                pendingNav = null;
+                applyNav(nav);
+            }
+        }
+
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             Uri url = request.getUrl();
