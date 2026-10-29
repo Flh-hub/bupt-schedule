@@ -2046,6 +2046,14 @@ function onHomeworkEvent(evt) {
   try {
     const payload = typeof evt.json === 'string' ? JSON.parse(evt.json) : evt.json || {};
     const list = normalizeList(payload.list);
+    // 课程名：undone 接口不带（siteId 恒为 -1），由抓取端逐门课查出来回传。
+    // 主键是作业 id；两个接口 id 不同源时用「标题|截止到分钟」兜底（一边带秒一边不带）。
+    const cmap = payload.courseMap && typeof payload.courseMap === 'object' ? payload.courseMap : {};
+    list.items.forEach((it) => {
+      if (it.courseName) return;
+      const key = it.title + '|' + String(it.due || '').slice(0, 16);
+      it.courseName = String(cmap[it.id] || cmap[key] || '');
+    });
     const details = {};
     const rawDetails = payload.details && typeof payload.details === 'object' ? payload.details : {};
     Object.keys(rawDetails).forEach((id) => {

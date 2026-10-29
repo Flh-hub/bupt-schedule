@@ -414,6 +414,38 @@ public final class HomeworkGrabber {
                         + "if(!lj||!lj.data){BuptHomework.error('unknown');return;}"
                         + "var items=(lj.data.undoneList||[]).slice(0," + DETAIL_LIMIT + ");"
                         + "var out={list:lj.data,details:{}};"
+                        // ★ 作业列表接口不返回课程名（undone 里 siteId 恒为 -1），只能逐门课查。
+                        //   「我的课程」不是 /ykt-site/site/list（那是全校 1836 条站点表），而是：
+                        //     GET /ykt-site/site/list/student/current?size=999999&current=1
+                        //         &userId=<uid>&siteRoleCode=2
+                        //   路径与参数取自网页端真实 XHR（2026-10-29 抓包）。
+                        + "out.courseMap={};"
+                        + "try{"
+                        + "var sc=await (await fetch(B+'/ykt-site/site/list/student/current?size=999999&current=1&userId='+uid+'&siteRoleCode=2',{headers:H})).json();"
+                        + "var sites=(sc&&sc.data&&sc.data.records)||[];"
+                        + "var PH={'Authorization':H['Authorization'],'Tenant-Id':H['Tenant-Id'],"
+                        + "'Blade-Auth':H['Blade-Auth'],'identity':H['identity'],'Content-Type':'application/json'};"
+                        + "var lim=Math.min(sites.length,40);"
+                        + "for(var si=0;si<lim;si++){"
+                        + "if(si)await sleep(120);"
+                        + "try{"
+                        + "var sd={siteId:String(sites[si].id),userId:String(uid),keyword:'',current:1,size:100,"
+                        + "studentAssignmentStatus:null,status:0,sortColumn:'',sortType:null};"
+                        + "var rq=await fetch(B+'/ykt-site/work/student/list',{method:'POST',headers:PH,body:JSON.stringify(sd)});"
+                        + "var qj=await rq.json();"
+                        + "var rows=(qj&&qj.data&&qj.data.records)||[];"
+                        + "var cn=String(sites[si].siteName||'');"
+                        + "for(var ri=0;ri<rows.length;ri++){"
+                        + "var rr=rows[ri];"
+                        // 两个接口的 id 不同源，且截止时间一边带秒一边不带 → 主键用「标题|分钟」
+                        + "var aid=String(rr.id==null?'':rr.id);"
+                        + "var tk=String(rr.assignmentTitle||'')+'|'+String(rr.assignmentEndTime||'').slice(0,16);"
+                        + "if(aid&&cn&&!out.courseMap[aid])out.courseMap[aid]=cn;"
+                        + "if(cn&&!out.courseMap[tk])out.courseMap[tk]=cn;"
+                        + "}"
+                        + "}catch(e){}"
+                        + "}"
+                        + "}catch(e){}"
                         + "for(var i=0;i<items.length;i++){"
                         + "try{"
                         + "var dr=await fetch(B+'/ykt-site/work/detail?assignmentId='+items[i].activityId,{headers:H});"
